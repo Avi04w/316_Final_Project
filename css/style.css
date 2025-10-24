@@ -118,3 +118,9 @@ footer {
     -ms-user-select: none;
     user-select: none;
  }
+
+.helix-tooltip {
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+}
+
