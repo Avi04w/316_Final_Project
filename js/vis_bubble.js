@@ -1,8 +1,12 @@
 class BubblePlayerViz {
-  constructor({ selector, data, centerSelector }) {
+  constructor({ selector, data, centerSelector, songsPath = "./songs/" }) {
     this.svg = d3.select(selector);
     this.centerEl = document.querySelector(centerSelector);
     this.data = data;
+    this.songsPath = songsPath;
+    this.currentAudio = null;
+    this.activeBubble = null;
+
     this.init();
     this.render();
     this.attachResizeHandler();
@@ -42,7 +46,8 @@ class BubblePlayerViz {
       .attr("class", "bubble-viz-bubble")
       .on("mouseover", (event, d) => this.showTooltip(event, d))
       .on("mousemove", (event) => this.moveTooltip(event))
-      .on("mouseleave", () => this.hideTooltip());;
+      .on("mouseleave", () => this.hideTooltip())
+      .on("click", (event, d) => this.handleBubbleClick(event, d));
 
     this.labels = this.svg.selectAll("text")
       .data(this.nodes.filter(d => !d.isCenter), d => d.id)
@@ -51,6 +56,7 @@ class BubblePlayerViz {
       .attr("text-anchor", "middle")
       .attr("dy", ".35em")
       .attr("class", "unselectable bubble-viz-bubble");
+    // TODO this stops propagation, so will affect the circle
   }
 
   ticked() {
@@ -96,7 +102,7 @@ class BubblePlayerViz {
       .style("opacity", 1)
       .html(`
         <strong>${d.track_name}</strong><br>
-        Popularity: ${d.tempo}
+        Tempo: ${d.tempo}
       `);
     this.moveTooltip(event);
   }
@@ -114,6 +120,42 @@ class BubblePlayerViz {
         .duration(100)
         .style("opacity", 0);
     }, 50);
+  }
+
+  handleBubbleClick(event, d) {
+    const songUrl = `${this.songsPath}${d.track_id}.mp3`;
+
+    if (this.currentAudio) {
+      this.currentAudio.pause();
+      this.currentAudio.currentTime = 0;
+      this.currentAudio = null;
+      this.updateLabels(d.track_id, false);
+      return;
+    }
+
+    if (this.activeBubble) {
+      this.activeBubble.attr("stroke", null).attr("stroke-width", null);
+    }
+
+    const audio = new Audio(songUrl);
+    audio.play().catch(err => console.error("Audio error:", err));
+
+    this.currentAudio = audio;
+
+    this.activeBubble = d3.select(event.currentTarget)
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 3);
+
+    this.updateLabels(d.track_id, true);
+  }
+
+  updateLabels(activeId, isPlaying) {
+    this.labels.text(d => {
+      if (activeId && d.track_id === activeId) {
+        return isPlaying ? "❚❚" : "▶";
+      }
+      return "▶";
+    });
   }
 }
 
