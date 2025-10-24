@@ -51,3 +51,11 @@ footer {
     border-top: 1px solid #1f2937;
     margin-top: 2rem;
 }
+
+*.unselectable {
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+ }
