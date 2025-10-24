@@ -10,6 +10,7 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/bubble.css" />
 
     <!-- GOOGLE FONTS -->
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300,500,400italic,300italic' rel='stylesheet' type='text/css'>
@@ -18,7 +19,7 @@
 
 <body>
 
-<header class="text-center py-5">
+<header id="hook" class="text-center py-5">
     <h1 class="display-5 fw-bold text-light">The Evolution of Sound</h1>
     <p class="lead text-secondary">Visualizing 30 Years of Pop Culture Through Data</p>
 </header>
@@ -29,6 +30,11 @@
         while becoming increasingly global as regional genres reshape the mainstream.
     </p>
 </section>
+
+<div id="bubble-viz-container">
+    <svg id="bubble-viz"></svg>
+    <div id="bubble-tooltip" class="bubble-tooltip"></div>
+</div>
 
 <main class="container">
     <div class="row mb-5">  
@@ -88,5 +94,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="js/vis_dna.js"></script>
+<script src="js/vis_bubble.js"></script>
 </body>
 </html>
