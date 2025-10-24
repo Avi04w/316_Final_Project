@@ -11,6 +11,8 @@ class BubblePlayerViz {
   init() {
     this.width = window.innerWidth;
     this.height = window.innerHeight;
+    this.tooltip = d3.select("#bubble-tooltip");
+    this.hideTimeout = null;
 
     this.svg.attr("viewBox", [0, 0, this.width, this.height]);
 
@@ -37,7 +39,10 @@ class BubblePlayerViz {
       .attr("r", d => d.tempo / 1.4)
       .attr("fill", (_d, i) => d3.schemeCategory10[i % 10])
       .attr("opacity", 0.8)
-      .attr("class", "bubble-viz-bubble");
+      .attr("class", "bubble-viz-bubble")
+      .on("mouseover", (event, d) => this.showTooltip(event, d))
+      .on("mousemove", (event) => this.moveTooltip(event))
+      .on("mouseleave", () => this.hideTooltip());;
 
     this.labels = this.svg.selectAll("text")
       .data(this.nodes.filter(d => !d.isCenter), d => d.id)
@@ -83,6 +88,32 @@ class BubblePlayerViz {
       this.init();
       this.render();
     });
+  }
+
+  showTooltip(event, d) {
+    if (this.hideTimeout) clearTimeout(this.hideTimeout);
+    this.tooltip
+      .style("opacity", 1)
+      .html(`
+        <strong>${d.track_name}</strong><br>
+        Popularity: ${d.tempo}
+      `);
+    this.moveTooltip(event);
+  }
+
+  moveTooltip(event) {
+    const [x, y] = d3.pointer(event);
+    this.tooltip
+      .style("left", `${x + 50}px`)
+      .style("top", `${y + 400}px`);
+  }
+
+  hideTooltip() {
+    this.hideTimeout = setTimeout(() => {
+      this.tooltip.transition()
+        .duration(100)
+        .style("opacity", 0);
+    }, 50);
   }
 }
 
