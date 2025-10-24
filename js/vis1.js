@@ -7,7 +7,7 @@ class AudioGenomeHelix {
         // --- Configuration and defaults ---
         this.selector = selector;
         this.width = config.width || document.querySelector(selector).offsetWidth;
-        this.height = config.height || 300;
+        this.height = config.height || 200;
         this.numX = config.numX || 40;
         this.speed = config.speed || 0.02;
         this.torsion = 0.5; // fixed torsion
@@ -30,7 +30,7 @@ class AudioGenomeHelix {
         this.svg.append("rect")
             .attr("width", this.width)
             .attr("height", this.height)
-            .attr("fill", "#0e1624");
+            .attr("fill", "white");
 
         this.container = this.svg.append("g");
         this.counter = 0;
@@ -101,7 +101,7 @@ class AudioGenomeHelix {
 
     start() {
         // Animation loop
-        this.timer = d3.interval(() => this.draw(), 25);
+        this.timer = d3.interval(() => this.draw(), 10);
     }
 
     stop() {
