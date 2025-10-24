@@ -111,5 +111,5 @@ class AudioGenomeHelix {
 
 // --- Initialize visualization ---
 document.addEventListener("DOMContentLoaded", () => {
-    new AudioGenomeHelix("#vis1");
+    new AudioGenomeHelix("#vis-dna");
 });
