@@ -62,7 +62,7 @@ class BubblePlayerViz {
 
         return `url(#${patternId})`;
       })
-      .attr("opacity", 0.8)
+      .attr("opacity", 0.7)
       .attr("class", "bubble-viz-bubble")
       .on("mouseover", (event, d) => this.showTooltip(event, d))
       .on("mousemove", (event) => this.moveTooltip(event))
@@ -154,6 +154,10 @@ class BubblePlayerViz {
   handleBubbleClick(event, d) {
     const songUrl = `${this.songsPath}${d.Year}.mp3`;
 
+    if (this.activeBubble) {
+      this.activeBubble.attr("stroke", null).attr("stroke-width", null).attr("opacity", 0.7);
+    }
+
     if (this.currentAudio) {
       this.currentAudio.pause();
       this.currentAudio.currentTime = 0;
@@ -161,10 +165,6 @@ class BubblePlayerViz {
       this.updateLabels(d.Year, false);
 
       if (d.Year === this.currentSongId) return;
-    }
-
-    if (this.activeBubble) {
-      this.activeBubble.attr("stroke", null).attr("stroke-width", null);
     }
 
     const audio = new Audio(songUrl);
@@ -175,7 +175,8 @@ class BubblePlayerViz {
 
     this.activeBubble = d3.select(event.currentTarget)
       .attr("stroke", "#fff")
-      .attr("stroke-width", 3);
+      .attr("stroke-width", 3)
+      .attr("opacity", 1);
 
     this.updateLabels(d.Year, true);
   }
