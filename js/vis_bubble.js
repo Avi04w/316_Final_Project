@@ -139,7 +139,7 @@ class BubblePlayerViz {
   moveTooltip(event) {
     const [x, y] = d3.pointer(event, document.body);
     this.tooltip
-      .style("left", `${x + 30}px`)
+      .style("left", `${x + 40}px`)
       .style("top", `${y}px`);
   }
 
