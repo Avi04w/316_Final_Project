@@ -13,8 +13,9 @@ class BubblePlayerViz {
   }
 
   init() {
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
+    const size = Math.min(window.innerWidth, window.innerHeight) * 1.7;
+    this.width = size;
+    this.height = size;
     this.tooltip = d3.select("#bubble-tooltip");
     this.hideTimeout = null;
 
@@ -30,9 +31,9 @@ class BubblePlayerViz {
     ];
 
     this.simulation = d3.forceSimulation(this.nodes)
-      .force("charge", d3.forceManyBody().strength(-60))
+      .force("charge", d3.forceManyBody().strength(-20))
       .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-      .force("collision", d3.forceCollide().radius(d => d.value))
+      .force("collision", d3.forceCollide().radius(d => d["Weeks in Charts"]))
       .on("tick", () => this.ticked());
   }
 
@@ -40,7 +41,7 @@ class BubblePlayerViz {
     this.circles = this.svg.selectAll("circle")
       .data(this.nodes.filter(d => !d.isCenter), d => d.id)
       .join("circle")
-      .attr("r", d => d.tempo / 1.4)
+      .attr("r", d => d["Weeks in Charts"])
       .attr("fill", (_d, i) => d3.schemeCategory10[i % 10])
       .attr("opacity", 0.8)
       .attr("class", "bubble-viz-bubble")
@@ -79,9 +80,9 @@ class BubblePlayerViz {
     ];
 
     this.simulation = d3.forceSimulation(this.nodes)
-      .force("charge", d3.forceManyBody().strength(-40))
+      .force("charge", d3.forceManyBody().strength(-10))
       .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-      .force("collision", d3.forceCollide().radius(d => d.value))
+      .force("collision", d3.forceCollide().radius(d => d["Weeks in Charts"]))
       .on("tick", () => this.ticked());
 
     this.render();
@@ -159,10 +160,12 @@ class BubblePlayerViz {
   }
 }
 
-d3.csv("data/processed/temp_dataset.csv").then((data) => {
-  new BubblePlayerViz({
-    selector: "#bubble-viz",
-    centerSelector: "#hook",
-    data: data.slice(0, 10)
-  });
+document.addEventListener("DOMContentLoaded", () => {
+  d3.csv("data/processed/top_hot_100_per_year.csv").then((data) => {
+    new BubblePlayerViz({
+      selector: "#bubble-viz",
+      centerSelector: "#bubble-viz-container",
+      data: data.toSorted((a, b) => b["Weeks in Charts"] - a["Weeks in Charts"])
+    });
+  })
 })
