@@ -4,8 +4,9 @@ class BubblePlayerViz {
     this.centerEl = document.querySelector(centerSelector);
     this.data = data;
     this.songsPath = songsPath;
-    this.currentAudio = null;
+    this.audioEl = document.getElementById("player");
     this.activeBubble = null;
+    this.currentSongId = null;
 
     this.init();
     this.render();
@@ -13,8 +14,9 @@ class BubblePlayerViz {
   }
 
   init() {
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
+    const size = Math.min(window.innerWidth, window.innerHeight) * 1.7;
+    this.width = size;
+    this.height = size;
     this.tooltip = d3.select("#bubble-tooltip");
     this.hideTimeout = null;
 
@@ -30,9 +32,9 @@ class BubblePlayerViz {
     ];
 
     this.simulation = d3.forceSimulation(this.nodes)
-      .force("charge", d3.forceManyBody().strength(-60))
+      .force("charge", d3.forceManyBody().strength(-20))
       .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-      .force("collision", d3.forceCollide().radius(d => d.value))
+      .force("collision", d3.forceCollide().radius(d => d["Weeks in Charts"]))
       .on("tick", () => this.ticked());
   }
 
@@ -40,9 +42,27 @@ class BubblePlayerViz {
     this.circles = this.svg.selectAll("circle")
       .data(this.nodes.filter(d => !d.isCenter), d => d.id)
       .join("circle")
-      .attr("r", d => d.tempo / 1.4)
-      .attr("fill", (_d, i) => d3.schemeCategory10[i % 10])
-      .attr("opacity", 0.8)
+      .attr("r", d => d["Weeks in Charts"])
+      .attr("fill", d => {
+        const patternId = `pattern-${d.Year}`;
+        let defs = this.svg.select("defs");
+        if (defs.empty()) defs = this.svg.append("defs");
+
+        const pattern = defs.append("pattern")
+          .attr("id", patternId)
+          .attr("width", 1)
+          .attr("height", 1)
+          .attr("patternUnits", "objectBoundingBox");
+
+        pattern.append("image")
+          .attr("href", d["Image URL"])
+          .attr("width", d["Weeks in Charts"] * 2)
+          .attr("height", d["Weeks in Charts"] * 2)
+          .attr("preserveAspectRatio", "xMidYMid slice");
+
+        return `url(#${patternId})`;
+      })
+      .attr("opacity", 0.7)
       .attr("class", "bubble-viz-bubble")
       .on("mouseover", (event, d) => this.showTooltip(event, d))
       .on("mousemove", (event) => this.moveTooltip(event))
@@ -55,8 +75,8 @@ class BubblePlayerViz {
       .text("▶")
       .attr("text-anchor", "middle")
       .attr("dy", ".35em")
-      .attr("class", "unselectable bubble-viz-bubble");
-    // TODO this stops propagation, so will affect the circle
+      .attr("class", "unselectable bubble-viz-player-label")
+      .style("stroke", "white");
   }
 
   ticked() {
@@ -79,9 +99,9 @@ class BubblePlayerViz {
     ];
 
     this.simulation = d3.forceSimulation(this.nodes)
-      .force("charge", d3.forceManyBody().strength(-40))
+      .force("charge", d3.forceManyBody().strength(-10))
       .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-      .force("collision", d3.forceCollide().radius(d => d.value))
+      .force("collision", d3.forceCollide().radius(d => d["Weeks in Charts"]))
       .on("tick", () => this.ticked());
 
     this.render();
@@ -98,20 +118,29 @@ class BubblePlayerViz {
 
   showTooltip(event, d) {
     if (this.hideTimeout) clearTimeout(this.hideTimeout);
+
+    const chartedDate = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(new Date(d.Date));
+
     this.tooltip
       .style("opacity", 1)
       .html(`
-        <strong>${d.track_name}</strong><br>
-        Tempo: ${d.tempo}
+        <strong style="font-size: 1.5em;">${d.Song} - ${d.Artist}</strong><br>
+        Charted Date: ${chartedDate} <br>
+        Weeks charted: ${parseInt(d["Weeks in Charts"])} <br>
+        Peak Position: ${d["Peak Position"]} <br>
       `);
     this.moveTooltip(event);
   }
 
   moveTooltip(event) {
-    const [x, y] = d3.pointer(event);
+    const [x, y] = d3.pointer(event, document.body);
     this.tooltip
-      .style("left", `${x + 50}px`)
-      .style("top", `${y + 400}px`);
+      .style("left", `${x + 30}px`)
+      .style("top", `${y}px`);
   }
 
   hideTooltip() {
@@ -123,35 +152,34 @@ class BubblePlayerViz {
   }
 
   handleBubbleClick(event, d) {
-    const songUrl = `${this.songsPath}${d.track_id}.mp3`;
-
-    if (this.currentAudio) {
-      this.currentAudio.pause();
-      this.currentAudio.currentTime = 0;
-      this.currentAudio = null;
-      this.updateLabels(d.track_id, false);
-      return;
-    }
+    const songUrl = `${this.songsPath}${d.Year}.mp3`;
 
     if (this.activeBubble) {
-      this.activeBubble.attr("stroke", null).attr("stroke-width", null);
+      this.activeBubble.attr("stroke", null).attr("stroke-width", null).attr("opacity", 0.7);
     }
 
-    const audio = new Audio(songUrl);
-    audio.play().catch(err => console.error("Audio error:", err));
+    if (d.Year === this.currentSongId && !this.audioEl.paused) {
+      this.audioEl.pause();
+      this.updateLabels(d.Year, false);
+      return
+    }
 
-    this.currentAudio = audio;
+    this.audioEl.src = songUrl;
+    this.audioEl.play().catch(err => console.error("Audio error:", err));
+
+    this.currentSongId = d.Year;
 
     this.activeBubble = d3.select(event.currentTarget)
       .attr("stroke", "#fff")
-      .attr("stroke-width", 3);
+      .attr("stroke-width", 3)
+      .attr("opacity", 1);
 
-    this.updateLabels(d.track_id, true);
+    this.updateLabels(d.Year, true);
   }
 
   updateLabels(activeId, isPlaying) {
     this.labels.text(d => {
-      if (activeId && d.track_id === activeId) {
+      if (activeId && d.Year === activeId) {
         return isPlaying ? "❚❚" : "▶";
       }
       return "▶";
@@ -159,10 +187,12 @@ class BubblePlayerViz {
   }
 }
 
-d3.csv("data/processed/temp_dataset.csv").then((data) => {
-  new BubblePlayerViz({
-    selector: "#bubble-viz",
-    centerSelector: "#hook",
-    data: data.slice(0, 10)
-  });
+document.addEventListener("DOMContentLoaded", () => {
+  d3.csv("data/processed/top_hot_100_per_year.csv").then((data) => {
+    new BubblePlayerViz({
+      selector: "#bubble-viz",
+      centerSelector: "#bubble-viz-container",
+      data: data.toSorted((a, b) => b["Weeks in Charts"] - a["Weeks in Charts"])
+    });
+  })
 })
