@@ -4,7 +4,6 @@ class BubblePlayerViz {
     this.centerEl = document.querySelector(centerSelector);
     this.data = data;
     this.songsPath = songsPath;
-    this.audioEl = document.getElementById("player");
     this.activeBubble = null;
     this.currentSongId = null;
     this.recordPlayer = recordPlayer;
@@ -152,23 +151,24 @@ class BubblePlayerViz {
     }, 50);
   }
 
-  handleBubbleClick(event, d) {
+  async handleBubbleClick(event, d) {
     const songUrl = `${this.songsPath}${d.Year}.mp3`;
 
     if (this.activeBubble) {
       this.activeBubble.attr("stroke", null).attr("stroke-width", null).attr("opacity", 0.7);
     }
 
-    if (d.Year === this.currentSongId && !this.audioEl.paused) {
-      this.audioEl.pause();
+    if (d.Year === this.currentSongId && !this.recordPlayer.isPaused()) {
       this.updateLabels(d.Year, false);
-      this.recordPlayer.stopSong();
+      this.recordPlayer.pause();
       return;
     }
 
-    this.audioEl.src = songUrl;
-    this.audioEl.play().catch(err => console.error("Audio error:", err));
-    this.recordPlayer.loadSong(d["Image URL"]);
+    if (d.Year !== this.currentSongId) {
+      await this.recordPlayer.load(songUrl, d["Image URL"]);
+    }
+    
+    this.recordPlayer.play();
 
     this.currentSongId = d.Year;
 

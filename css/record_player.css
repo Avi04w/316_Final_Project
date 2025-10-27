@@ -4,6 +4,7 @@
   right: 20px;
   width: 150px;
   height: 150px;
+  cursor: pointer;
 }
 
 #record-player-shell-out,
