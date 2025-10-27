@@ -43,7 +43,25 @@ class BubblePlayerViz {
       .data(this.nodes.filter(d => !d.isCenter), d => d.id)
       .join("circle")
       .attr("r", d => d["Weeks in Charts"])
-      .attr("fill", (_d, i) => d3.schemeCategory10[i % 10])
+      .attr("fill", d => {
+        const patternId = `pattern-${d.Year}`;
+        let defs = this.svg.select("defs");
+        if (defs.empty()) defs = this.svg.append("defs");
+
+        const pattern = defs.append("pattern")
+          .attr("id", patternId)
+          .attr("width", 1)
+          .attr("height", 1)
+          .attr("patternUnits", "objectBoundingBox");
+
+        pattern.append("image")
+          .attr("href", d["Image URL"])
+          .attr("width", d["Weeks in Charts"] * 2)
+          .attr("height", d["Weeks in Charts"] * 2)
+          .attr("preserveAspectRatio", "xMidYMid slice");
+
+        return `url(#${patternId})`;
+      })
       .attr("opacity", 0.8)
       .attr("class", "bubble-viz-bubble")
       .on("mouseover", (event, d) => this.showTooltip(event, d))
@@ -57,8 +75,8 @@ class BubblePlayerViz {
       .text("▶")
       .attr("text-anchor", "middle")
       .attr("dy", ".35em")
-      .attr("class", "unselectable bubble-viz-bubble");
-    // TODO this stops propagation, so will affect the circle
+      .attr("class", "unselectable bubble-viz-player-label")
+      .style("stroke", "white");
   }
 
   ticked() {
