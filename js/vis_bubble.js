@@ -4,7 +4,7 @@ class BubblePlayerViz {
     this.centerEl = document.querySelector(centerSelector);
     this.data = data;
     this.songsPath = songsPath;
-    this.currentAudio = null;
+    this.audioEl = document.getElementById("player");
     this.activeBubble = null;
     this.currentSongId = null;
 
@@ -158,20 +158,16 @@ class BubblePlayerViz {
       this.activeBubble.attr("stroke", null).attr("stroke-width", null).attr("opacity", 0.7);
     }
 
-    if (this.currentAudio) {
-      this.currentAudio.pause();
-      this.currentAudio.currentTime = 0;
-      this.currentAudio = null;
+    if (d.Year === this.currentSongId && !this.audioEl.paused) {
+      this.audioEl.pause();
       this.updateLabels(d.Year, false);
-
-      if (d.Year === this.currentSongId) return;
+      return
     }
 
-    const audio = new Audio(songUrl);
-    audio.play().catch(err => console.error("Audio error:", err));
+    this.audioEl.src = songUrl;
+    this.audioEl.play().catch(err => console.error("Audio error:", err));
 
-    this.currentAudio = audio;
-    this.currentSongId = d.Year
+    this.currentSongId = d.Year;
 
     this.activeBubble = d3.select(event.currentTarget)
       .attr("stroke", "#fff")
