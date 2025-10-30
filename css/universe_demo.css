@@ -4,25 +4,35 @@
     box-sizing: border-box;
 }
 
-html, body {
+html {
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
     height: 100%;
-    width: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    overflow-x: hidden;
     background: #ffffff;
     color: #333;
+    height: 100%;
+    width: 100%;
+}
+
+#main-viz-container {
+    position: relative;
+    height: 400vh; /* 4 pages worth */
 }
 
 #canvas-container {
-    position: fixed;
+    position: sticky;
     top: 0;
     right: 0;
     width: 60vw;
     height: 100vh;
     z-index: 1;
+    float: right;
 }
 
 #canvas-container canvas {
@@ -36,10 +46,6 @@ body {
     z-index: 2;
     width: 40vw;
     pointer-events: none;
-    height: 100vh;
-    overflow-y: scroll;
-    scroll-snap-type: y mandatory;
-    scroll-behavior: smooth;
 }
 
 .page {
@@ -350,6 +356,13 @@ button.hidden {
     color: rgba(0, 0, 0, 0.4);
     font-size: 14px;
     animation: bounce 2s infinite;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+#scroll-hint.hide {
+    opacity: 0;
+    pointer-events: none;
 }
 
 @keyframes bounce {
