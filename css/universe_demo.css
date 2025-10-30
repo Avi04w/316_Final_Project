@@ -36,14 +36,22 @@ body {
     z-index: 2;
     width: 40vw;
     pointer-events: none;
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
 }
 
 .page {
     min-height: 100vh;
+    height: 100vh;
     display: flex;
     align-items: center;
+    justify-content: center;
     padding: 0 60px;
     width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
 
 .content-box {
@@ -76,6 +84,19 @@ p {
     line-height: 1.8;
     color: #555;
     margin-bottom: 15px;
+}
+
+ul {
+    line-height: 1.2;
+    color: #555;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 20px;
+    padding-left: 0;
+}
+
+li {
+    margin-bottom: 8px;
 }
 
 .control-section {
