@@ -321,10 +321,19 @@ class MusicUniverseVisualization {
             this.raycaster.setFromCamera(this.mouse, this.camera);
             const intersects = this.raycaster.intersectObject(this.points);
             
-            if (intersects.length > 0) {
-                const index = intersects[0].index;
-                this.hoveredPoint = index;
-                this.showTooltip(index, event, rect);
+            // Find first intersected point that matches genre filter
+            let validIntersect = null;
+            for (let i = 0; i < intersects.length; i++) {
+                const index = intersects[i].index;
+                if (this.trackMatchesGenre(this.parsedData[index])) {
+                    validIntersect = index;
+                    break;
+                }
+            }
+            
+            if (validIntersect !== null) {
+                this.hoveredPoint = validIntersect;
+                this.showTooltip(validIntersect, event, rect);
             } else {
                 this.hoveredPoint = null;
                 this.tooltip.style.display = 'none';
