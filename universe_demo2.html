@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Music Universe - Interactive Visualization</title>
+    <link rel="stylesheet" href="css/universe_demo.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<button id="reset-view">🏠 Reset View</button>
+
+<div id="content-wrapper">
+    <!-- Page 1: Introduction -->
+    <div class="page">
+        <div class="content-box">
+            <h1>Music Universe</h1>
+            <p>
+                Explore 15,000+ songs visualized in 3D space using Principal Component Analysis (PCA) 
+                of audio features from Spotify.
+            </p>
+            <p>
+                Each point represents a song, positioned based on its acoustic properties like energy, 
+                danceability, and valence. Similar songs cluster together, revealing hidden patterns in music.
+            </p>
+            <p>
+                <strong>Interactions:</strong><br>
+                • Click and drag to rotate<br>
+                • Cmd/Ctrl + Scroll to zoom<br>
+                • Hover over points for details<br>
+                • Scroll down for filters
+            </p>
+        </div>
+    </div>
+
+    <!-- Page 2: Controls -->
+    <div class="page">
+        <div class="content-box">
+            <h2>Filters & Controls</h2>
+            
+            <div class="control-section">
+                <label for="color-feature">Color By</label>
+                <select id="color-feature">
+                    <option value="none" selected>None (Grey)</option>
+                    <option value="energy">Energy</option>
+                    <option value="danceability">Danceability</option>
+                    <option value="valence">Valence</option>
+                    <option value="acousticness">Acousticness</option>
+                    <option value="instrumentalness">Instrumentalness</option>
+                    <option value="speechiness">Speechiness</option>
+                    <option value="liveness">Liveness</option>
+                    <option value="loudness">Loudness</option>
+                    <option value="key">Key</option>
+                    <option value="mode">Mode</option>
+                </select>
+            </div>
+
+            <div class="control-section">
+                <label for="genre-filter">Filter by Genre</label>
+                <input type="text" id="genre-filter" placeholder="Search genres...">
+                <div id="genre-suggestions"></div>
+                <button id="clear-genre" style="display: none;">Clear Filter</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="scroll-hint">↓ Scroll to explore ↓</div>
+
+<script src="js/vis_universe.js"></script>
+
+</body>
+</html>

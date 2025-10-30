@@ -25,9 +25,14 @@ class MusicUniverseVisualization {
         'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence'
     ];
 
-    constructor(containerId, dataUrl) {
+    constructor(containerId, dataUrl, options = {}) {
         this.containerId = containerId;
         this.dataUrl = dataUrl;
+        this.options = {
+            showBorder: true,
+            requireModifierForZoom: false,
+            ...options
+        };
         
         // Three.js components
         this.scene = null;
@@ -120,24 +125,29 @@ class MusicUniverseVisualization {
      */
     initScene() {
         const container = document.getElementById(this.containerId);
-        container.style.position = 'relative';
+        // Don't override container position - let CSS handle it
         
         // Calculate dimensions based on container
         this.updateDimensions();
         
         // Create scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0xffffff);
+        this.scene.background = this.options.showBorder ? new THREE.Color(0xffffff) : null;
         
         // Create camera
         this.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.1, 1000);
-        this.camera.position.set(6, 3, 6);
+        this.camera.position.set(7, 6, 7);
         
-        // Create renderer
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                // Create renderer
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.setSize(this.width, this.height);
-        this.renderer.domElement.style.border = '2px solid #061929ff';
-        this.renderer.domElement.style.borderRadius = '4px';
+        
+        // Apply optional border
+        if (this.options.showBorder) {
+            this.renderer.domElement.style.border = '2px solid #2196F3';
+            this.renderer.domElement.style.borderRadius = '4px';
+        }
+        
         container.appendChild(this.renderer.domElement);
         
         // Initialize raycaster
@@ -239,10 +249,7 @@ class MusicUniverseVisualization {
             transparent: true,
             vertexColors: true,
             depthWrite: false,
-            blending: THREE.CustomBlending,
-            blendEquation: THREE.AddEquation,
-            blendSrc: THREE.SrcAlphaFactor,
-            blendDst: THREE.OneMinusSrcAlphaFactor,
+            blending: THREE.NormalBlending,
             depthTest: true
         });
         
@@ -445,15 +452,16 @@ class MusicUniverseVisualization {
     }
 
     /**
-     * Animate color transition
+     * Animate color and alpha transition
      */
-    animateColorTransition(fromColors, toColors, duration = 500) {
+    animateColorTransition(fromColors, toColors, fromAlphas, toAlphas, duration = 500) {
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
         }
         
         const startTime = performance.now();
         const colorAttribute = this.geometry.getAttribute('color');
+        const alphaAttribute = this.geometry.getAttribute('alpha');
         
         const updateFrame = (currentTime) => {
             const elapsed = currentTime - startTime;
@@ -469,9 +477,13 @@ class MusicUniverseVisualization {
                 colorAttribute.array[i * 3] = fromColors[i * 3] + (toColors[i * 3] - fromColors[i * 3]) * easedProgress;
                 colorAttribute.array[i * 3 + 1] = fromColors[i * 3 + 1] + (toColors[i * 3 + 1] - fromColors[i * 3 + 1]) * easedProgress;
                 colorAttribute.array[i * 3 + 2] = fromColors[i * 3 + 2] + (toColors[i * 3 + 2] - fromColors[i * 3 + 2]) * easedProgress;
+                
+                // Interpolate alphas
+                alphaAttribute.array[i] = fromAlphas[i] + (toAlphas[i] - fromAlphas[i]) * easedProgress;
             }
             
             colorAttribute.needsUpdate = true;
+            alphaAttribute.needsUpdate = true;
             
             if (progress < 1) {
                 this.animationFrameId = requestAnimationFrame(updateFrame);
@@ -502,6 +514,7 @@ class MusicUniverseVisualization {
         const colorAttribute = this.geometry.getAttribute('color');
         const alphaAttribute = this.geometry.getAttribute('alpha');
         const oldColors = new Float32Array(colorAttribute.array);
+        const oldAlphas = new Float32Array(alphaAttribute.array);
         
         const newColors = new Float32Array(this.parsedData.length * 3);
         const newAlphas = new Float32Array(this.parsedData.length);
@@ -514,7 +527,7 @@ class MusicUniverseVisualization {
                     newColors[i * 3] = 0.5;     // R
                     newColors[i * 3 + 1] = 0.5; // G
                     newColors[i * 3 + 2] = 0.5; // B
-                    newAlphas[i] = 0.8;
+                    newAlphas[i] = 0.5;
                 } else {
                     // Dimmed grey for non-matching
                     newColors[i * 3] = 0.3;
@@ -548,15 +561,13 @@ class MusicUniverseVisualization {
         }
         
         if (animate) {
-            this.animateColorTransition(oldColors, newColors);
+            this.animateColorTransition(oldColors, newColors, oldAlphas, newAlphas);
         } else {
             colorAttribute.array.set(newColors);
             colorAttribute.needsUpdate = true;
+            alphaAttribute.array.set(newAlphas);
+            alphaAttribute.needsUpdate = true;
         }
-        
-        // Update alpha values
-        alphaAttribute.array.set(newAlphas);
-        alphaAttribute.needsUpdate = true;
         
         this.currentColorFeature = feature;
         
@@ -625,17 +636,33 @@ class MusicUniverseVisualization {
         let g, axisGroup, titleText;
         
         if (svg.empty()) {
+            const shadowPadding = 10;
             svg = container.append('svg')
                 .attr('id', 'color-legend')
                 .style('position', 'absolute')
-                .style('right', '20px')
+                .style('right', '10px')
                 .style('top', '50%')
                 .style('transform', 'translateY(-50%)')
+                .attr('width', legendWidth + legendMargin.right + 60 + shadowPadding * 2)
+                .attr('height', legendHeight + legendMargin.top + legendMargin.bottom + shadowPadding * 2)
+                .style('overflow', 'visible');
+            
+            // Add white background box
+            svg.append('rect')
+                .attr('class', 'legend-background')
+                .attr('x', shadowPadding)
+                .attr('y', shadowPadding)
                 .attr('width', legendWidth + legendMargin.right + 60)
-                .attr('height', legendHeight + legendMargin.top + legendMargin.bottom);
+                .attr('height', legendHeight + legendMargin.top + legendMargin.bottom)
+                .attr('rx', 12)
+                .attr('ry', 12)
+                .style('fill', 'rgba(255, 255, 255, 0.95)')
+                .style('stroke', 'rgba(0, 0, 0, 0.1)')
+                .style('stroke-width', '1px')
+                .style('filter', 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.1))');
             
             g = svg.append('g')
-                .attr('transform', `translate(20, ${legendMargin.top})`);
+                .attr('transform', `translate(${20 + shadowPadding}, ${legendMargin.top + shadowPadding})`);
             
             const defs = svg.append('defs');
             const gradient = defs.append('linearGradient')
@@ -697,16 +724,9 @@ class MusicUniverseVisualization {
         const container = document.getElementById(this.containerId);
         const rect = container.getBoundingClientRect();
         
-        // Use container width or fallback to window-based calculation
-        if (rect.width > 0) {
-            this.width = rect.width;
-        } else {
-            // Calculate based on window size minus some margin for the dropdown
-            this.width = Math.min(window.innerWidth * 0.7, 1000);
-        }
-        
-        // Height is proportional to width (4:3 aspect ratio) or based on window
-        this.height = Math.min(this.width * 0.75, window.innerHeight * 0.7);
+        // Use container dimensions directly
+        this.width = rect.width || window.innerWidth;
+        this.height = rect.height || window.innerHeight;
     }
 
     /**
@@ -752,7 +772,7 @@ class MusicUniverseVisualization {
                 genreSuggestions.innerHTML = matches.map(g => 
                     `<div style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;" 
                           class="genre-option" data-genre="${g.genre}">
-                        <span>${g.genre}</span>
+                        <span>${this.capitalizeGenre(g.genre)}</span>
                         <span style="color: #999; font-size: 12px;">${g.count}</span>
                     </div>`
                 ).join('');
@@ -763,7 +783,7 @@ class MusicUniverseVisualization {
                     option.addEventListener('click', () => {
                         const genre = option.getAttribute('data-genre');
                         this.filterByGenre(genre);
-                        genreInput.value = genre;
+                        genreInput.value = this.capitalizeGenre(genre);
                         genreSuggestions.style.display = 'none';
                         clearButton.style.display = 'block';
                     });
@@ -797,8 +817,94 @@ class MusicUniverseVisualization {
             }
         });
         
+        // Reset view button
+        const resetButton = document.getElementById('reset-view');
+        if (resetButton) {
+            resetButton.addEventListener('click', () => {
+                this.resetView();
+            });
+        }
+        
         // Add window resize listener
         window.addEventListener('resize', () => this.onWindowResize());
+        
+        // Setup zoom modifier key requirement if enabled
+        if (this.options.requireModifierForZoom) {
+            this.setupModifierZoom();
+        }
+    }
+    
+    /**
+     * Reset camera to home position
+     */
+    resetView() {
+        // Animate camera back to home position
+        const startPosition = this.camera.position.clone();
+        const targetPosition = new THREE.Vector3(6, 3, 6);
+        const startTarget = this.controls.target.clone();
+        const targetTarget = new THREE.Vector3(0, 0, 0);
+        
+        const duration = 1000; // 1 second
+        const startTime = performance.now();
+        
+        const animateReset = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Ease out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            
+            // Interpolate camera position
+            this.camera.position.lerpVectors(startPosition, targetPosition, eased);
+            
+            // Interpolate controls target
+            this.controls.target.lerpVectors(startTarget, targetTarget, eased);
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateReset);
+            }
+        };
+        
+        requestAnimationFrame(animateReset);
+    }
+    
+    /**
+     * Setup modifier key requirement for zoom
+     */
+    setupModifierZoom() {
+        this.controls.enableZoom = false; // Disable default zoom
+        
+        this.renderer.domElement.addEventListener('wheel', (event) => {
+            // Only zoom if Cmd (Mac) or Ctrl (Windows/Linux) is held
+            if (event.metaKey || event.ctrlKey) {
+                event.preventDefault();
+                
+                const delta = event.deltaY;
+                const zoomSpeed = 0.1;
+                
+                // Manual zoom by adjusting camera position
+                const direction = new THREE.Vector3();
+                this.camera.getWorldDirection(direction);
+                
+                if (delta < 0) {
+                    // Zoom in
+                    this.camera.position.addScaledVector(direction, zoomSpeed);
+                } else {
+                    // Zoom out
+                    this.camera.position.addScaledVector(direction, -zoomSpeed);
+                }
+            }
+        }, { passive: false });
+    }
+    
+    /**
+     * Capitalize genre name for display
+     */
+    capitalizeGenre(genre) {
+        return genre
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
     }
     
     /**
@@ -812,9 +918,25 @@ class MusicUniverseVisualization {
 }
 
 // Initialize visualization when DOM is loaded
-const visualization = new MusicUniverseVisualization(
-    'universe-vis',
-    '../data/processed/spotify_tracks_pca.ndjson'
-);
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if we're in the fullscreen demo or regular demo
+    const isFullscreen = document.getElementById('canvas-container') !== null;
 
-visualization.init();
+    if (isFullscreen) {
+        const visualization = new MusicUniverseVisualization(
+            'canvas-container',
+            'data/processed/spotify_tracks_pca.ndjson',
+            {
+                showBorder: false,
+                requireModifierForZoom: true
+            }
+        );
+        visualization.init();
+    } else {
+        const visualization = new MusicUniverseVisualization(
+            'universe-vis',
+            '../data/processed/spotify_tracks_pca.ndjson'
+        );
+        visualization.init();
+    }
+});
