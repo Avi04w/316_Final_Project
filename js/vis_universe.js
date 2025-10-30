@@ -410,12 +410,24 @@ class MusicUniverseVisualization {
                 clearButton.classList.remove('hidden');
             }
             
-            // Disable color dropdown
+            // Reset color dropdown to placeholder (but keep it enabled)
             const dropdown = document.getElementById('color-feature');
             if (dropdown) {
-                dropdown.disabled = true;
-                dropdown.style.opacity = '0.5';
-                dropdown.style.cursor = 'not-allowed';
+                dropdown.value = ''; // Reset to default placeholder
+                dropdown.classList.add('placeholder-active');
+            }
+            
+            // Clear genre filter
+            const genreInput = document.getElementById('genre-filter');
+            if (genreInput && genreInput.value) {
+                genreInput.value = '';
+                this.filterByGenre(''); // Clear the filter
+            }
+            
+            // Hide clear genre button
+            const clearGenreButton = document.getElementById('clear-genre');
+            if (clearGenreButton) {
+                clearGenreButton.classList.add('hidden');
             }
         };
         
@@ -534,12 +546,24 @@ class MusicUniverseVisualization {
                 clearButton.classList.remove('hidden');
             }
             
-            // Disable color dropdown
+            // Reset color dropdown to placeholder (but keep it enabled)
             const dropdown = document.getElementById('color-feature');
             if (dropdown) {
-                dropdown.disabled = true;
-                dropdown.style.opacity = '0.5';
-                dropdown.style.cursor = 'not-allowed';
+                dropdown.value = ''; // Reset to default placeholder
+                dropdown.classList.add('placeholder-active');
+            }
+            
+            // Clear genre filter
+            const genreInput = document.getElementById('genre-filter');
+            if (genreInput && genreInput.value) {
+                genreInput.value = '';
+                this.filterByGenre(''); // Clear the filter
+            }
+            
+            // Hide clear genre button
+            const clearGenreButton = document.getElementById('clear-genre');
+            if (clearGenreButton) {
+                clearGenreButton.classList.add('hidden');
             }
             
             currentWeekIndex++;
@@ -1323,7 +1347,7 @@ class MusicUniverseVisualization {
                     newColors[i * 3] = 0.5;     // R
                     newColors[i * 3 + 1] = 0.5; // G
                     newColors[i * 3 + 2] = 0.5; // B
-                    newAlphas[i] = 0.6;
+                    newAlphas[i] = 0.7;
                 } else {
                     // Dimmed grey for non-matching
                     newColors[i * 3] = 0.3;
@@ -1652,6 +1676,44 @@ class MusicUniverseVisualization {
             if (dropdown.value !== '') {
                 dropdown.classList.remove('placeholder-active');
             }
+            
+            // If Billboard mode is active, clear it first
+            if (this.billboardMode) {
+                // Stop animation if playing
+                this.pauseTimeline();
+                
+                this.billboardMode = false;
+                this.selectedYear = null;
+                this.currentWeek = null;
+                
+                // Hide clear button
+                const clearBillboard = document.getElementById('clear-billboard');
+                if (clearBillboard) {
+                    clearBillboard.classList.add('hidden');
+                }
+                
+                // Reset timeline display
+                const yearEl = document.querySelector('#timeline-year-display .year');
+                const dateRangeEl = document.querySelector('#timeline-year-display .date-range');
+                if (yearEl) {
+                    yearEl.textContent = '—';
+                }
+                if (dateRangeEl) {
+                    dateRangeEl.textContent = 'No year selected';
+                }
+                
+                // Reset slider to start
+                const slider = document.getElementById('timeline-slider');
+                if (slider) {
+                    slider.style.left = '0%';
+                }
+            }
+            
+            // Re-enable dropdown if it was disabled
+            dropdown.disabled = false;
+            dropdown.style.opacity = '1';
+            dropdown.style.cursor = 'pointer';
+            
             // Default to 'none' if placeholder is somehow selected
             const selectedValue = dropdown.value || 'none';
             this.updateColors(selectedValue, true);
@@ -1689,6 +1751,27 @@ class MusicUniverseVisualization {
                 genreSuggestions.querySelectorAll('.genre-option').forEach(option => {
                     option.addEventListener('click', () => {
                         const genre = option.getAttribute('data-genre');
+                        
+                        // Clear Billboard mode if active
+                        if (this.billboardMode) {
+                            this.pauseTimeline();
+                            this.billboardMode = false;
+                            this.selectedYear = null;
+                            this.currentWeek = null;
+                            
+                            // Hide clear billboard button
+                            const clearBillboardButton = document.getElementById('clear-billboard');
+                            if (clearBillboardButton) {
+                                clearBillboardButton.classList.add('hidden');
+                            }
+                            
+                            // Reset timeline display
+                            const timelineDisplay = document.getElementById('timeline-display');
+                            if (timelineDisplay) {
+                                timelineDisplay.textContent = '';
+                            }
+                        }
+                        
                         this.filterByGenre(genre);
                         genreInput.value = this.capitalizeGenre(genre);
                         genreSuggestions.style.display = 'none';
