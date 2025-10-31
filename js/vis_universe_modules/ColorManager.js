@@ -77,7 +77,7 @@ export class ColorManager {
                     newColors[i * 3] = 0.3;
                     newColors[i * 3 + 1] = 0.3;
                     newColors[i * 3 + 2] = 0.3;
-                    newAlphas[i] = 0.3;
+                    newAlphas[i] = 0.25;
                 }
             }
         } else if (feature === 'none') {
@@ -92,7 +92,7 @@ export class ColorManager {
                     newColors[i * 3] = 0.3;
                     newColors[i * 3 + 1] = 0.3;
                     newColors[i * 3 + 2] = 0.3;
-                    newAlphas[i] = 0.3;
+                    newAlphas[i] = 0.25;
                 }
             }
         } else {
@@ -112,7 +112,7 @@ export class ColorManager {
                     newColors[i * 3] = 0.3;
                     newColors[i * 3 + 1] = 0.3;
                     newColors[i * 3 + 2] = 0.3;
-                    newAlphas[i] = 0.3;
+                    newAlphas[i] = 0.25;
                 }
             });
         }

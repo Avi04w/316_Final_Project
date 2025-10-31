@@ -17,6 +17,7 @@ export class UIManager {
         this.onClearBillboardCallback = null;
         this.onResetViewCallback = null;
         this.onToggleLoadingsCallback = null;
+        this.onSpeedChangeCallback = null;
     }
     
     /**
@@ -31,6 +32,7 @@ export class UIManager {
         this.onClearBillboardCallback = callbacks.onClearBillboard;
         this.onResetViewCallback = callbacks.onResetView;
         this.onToggleLoadingsCallback = callbacks.onToggleLoadings;
+        this.onSpeedChangeCallback = callbacks.onSpeedChange;
     }
     
     /**
@@ -199,6 +201,23 @@ export class UIManager {
                 }
             });
         }
+        
+        // Speed control buttons
+        const speedButtons = document.querySelectorAll('.speed-btn');
+        speedButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const speed = parseFloat(button.dataset.speed);
+                
+                // Update active state
+                speedButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Notify callback (will be connected to BillboardController)
+                if (this.onSpeedChangeCallback) {
+                    this.onSpeedChangeCallback(speed);
+                }
+            });
+        });
     }
     
     /**

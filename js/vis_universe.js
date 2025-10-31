@@ -177,7 +177,12 @@ class MusicUniverseVisualization {
                     }
                 },
                 onResetView: () => this.resetView(),
-                onToggleLoadings: (visible) => this.toggleLoadingArrows(visible)
+                onToggleLoadings: (visible) => this.toggleLoadingArrows(visible),
+                onSpeedChange: (speed) => {
+                    if (this.billboardController) {
+                        this.billboardController.setPlaybackSpeed(speed);
+                    }
+                }
             });
             this.uiManager.setupEventListeners(this.options);
             this.uiManager.setupIntersectionObserver();

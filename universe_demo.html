@@ -112,12 +112,20 @@
                     <div id="timeline-labels"></div>
                 </div>
                 <div id="timeline-year-display">
-                    <div class="year">—</div>
                     <div class="date-range">No year selected</div>
                 </div>
                 <div class="button-group">
                     <button id="play-timeline" class="button-flex">▶ Play</button>
-                    <button id="clear-billboard" class="hidden button-flex">Clear Billboard</button>
+                    <button id="clear-billboard" class="button-flex" disabled>Clear Billboard</button>
+                </div>
+                <div class="speed-control">
+                    <label for="playback-speed">Speed:</label>
+                    <div class="speed-buttons">
+                        <button class="speed-btn" data-speed="0.5">0.5×</button>
+                        <button class="speed-btn active" data-speed="1">1×</button>
+                        <button class="speed-btn" data-speed="2">2×</button>
+                        <button class="speed-btn" data-speed="5">5×</button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -213,8 +213,16 @@ button:hover {
     border-color: #2196F3;
 }
 
-button.hidden {
-    visibility: hidden;
+button:disabled {
+    background: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+    border-color: #ccc;
+}
+
+button:disabled:hover {
+    background: #e0e0e0;
+    border-color: #ccc;
 }
 
 /* Timeline styles */
@@ -301,22 +309,72 @@ button.hidden {
 #timeline-year-display {
     text-align: center;
     margin: 10px 0;
-    min-height: 60px;
-}
-
-#timeline-year-display .year {
-    font-size: 32px;
-    font-weight: 700;
-    color: #2196F3;
-    line-height: 1.2;
+    min-height: 30px;
 }
 
 #timeline-year-display .date-range {
     font-size: 14px;
-    color: #999;
-    margin-top: 4px;
+    color: #666;
     font-family: monospace;
     letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.speed-control {
+    margin-top: 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    justify-content: center;
+}
+
+.speed-control label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+    padding-bottom: 6px;
+}
+
+.speed-buttons {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.speed-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    background: white;
+    color: #666;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    min-width: 50px;
+    line-height: 1;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.speed-btn:hover {
+    background: #f5f5f5;
+    border-color: #999;
+}
+
+.speed-btn.active {
+    background: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+.speed-btn:active {
+    transform: scale(0.95);
 }
 
 #reset-view {

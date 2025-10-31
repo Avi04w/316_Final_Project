@@ -15,6 +15,7 @@ export class BillboardController {
         this.selectedYear = null;
         this.billboardMode = false;
         this.pausedWeekIndex = null; // Store exact week index when paused
+        this.playbackSpeed = 1; // Default speed multiplier
         
         // Timeline metadata
         this.timelineMinYear = null;
@@ -180,10 +181,8 @@ export class BillboardController {
             endDate.setFullYear(endDate.getFullYear() + 1);
             
             // Update year display
-            const yearEl = yearDisplay.querySelector('.year');
             const dateRangeEl = yearDisplay.querySelector('.date-range');
-            if (yearEl && dateRangeEl) {
-                yearEl.textContent = year;
+            if (dateRangeEl) {
                 dateRangeEl.textContent = this.formatDateRange(startDate, endDate);
             }
             
@@ -191,10 +190,10 @@ export class BillboardController {
             this.colorManager.setFilterState(null, this.billboardMode, this.selectedYear, this.currentWeek);
             this.colorManager.updateColors('none', false);
             
-            // Show clear button
+            // Enable clear button
             const clearButton = document.getElementById('clear-billboard');
             if (clearButton) {
-                clearButton.classList.remove('hidden');
+                clearButton.disabled = false;
             }
             
             // Reset color dropdown
@@ -313,10 +312,8 @@ export class BillboardController {
             // Update year display
             const yearDisplay = document.getElementById('timeline-year-display');
             if (yearDisplay) {
-                const yearEl = yearDisplay.querySelector('.year');
                 const dateRangeEl = yearDisplay.querySelector('.date-range');
-                if (yearEl && dateRangeEl) {
-                    yearEl.textContent = year;
+                if (dateRangeEl) {
                     dateRangeEl.textContent = this.formatDateRange(startDate, endDate);
                 }
             }
@@ -332,10 +329,10 @@ export class BillboardController {
             this.colorManager.setFilterState(null, this.billboardMode, this.selectedYear, this.currentWeek);
             this.colorManager.updateColors('none', false);
             
-            // Show clear button
+            // Enable clear button
             const clearButton = document.getElementById('clear-billboard');
             if (clearButton) {
-                clearButton.classList.remove('hidden');
+                clearButton.disabled = false;
             }
             
             // Reset color dropdown
@@ -365,10 +362,32 @@ export class BillboardController {
                 currentWeekIndex = 0;
             }
             
-            this.timelineAnimationId = setTimeout(animateWeek, 3);
+            // Calculate delay based on playback speed (base delay is 3ms)
+            const baseDelay = 10;
+            const delay = baseDelay / this.playbackSpeed;
+            
+            this.timelineAnimationId = setTimeout(animateWeek, delay);
         };
         
         animateWeek();
+    }
+    
+    /**
+     * Set playback speed
+     */
+    setPlaybackSpeed(speed) {
+        this.playbackSpeed = speed;
+        console.log(`Playback speed set to ${speed}×`);
+        
+        // If currently playing, restart with new speed
+        if (this.timelineIsPlaying) {
+            const wasPlaying = this.timelineIsPlaying;
+            this.pause();
+            if (wasPlaying) {
+                // Small delay to ensure clean restart
+                setTimeout(() => this.play(), 10);
+            }
+        }
     }
     
     /**
@@ -408,18 +427,16 @@ export class BillboardController {
         this.currentWeek = null;
         this.pausedWeekIndex = null;
         
-        // Hide clear button
+        // Disable clear button
         const clearButton = document.getElementById('clear-billboard');
         if (clearButton) {
-            clearButton.classList.add('hidden');
+            clearButton.disabled = true;
         }
         
         // Reset timeline display
         const yearDisplay = document.getElementById('timeline-year-display');
         if (yearDisplay) {
-            const yearEl = yearDisplay.querySelector('.year');
             const dateRangeEl = yearDisplay.querySelector('.date-range');
-            if (yearEl) yearEl.textContent = '—';
             if (dateRangeEl) dateRangeEl.textContent = 'No year selected';
         }
         
