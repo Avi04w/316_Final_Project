@@ -5,6 +5,7 @@
   width: 150px;
   height: 150px;
   cursor: pointer;
+  z-index: 1000;
 }
 
 #record-player-shell-out,
@@ -20,7 +21,7 @@
 #record-player-shell-out {
   width: 100%;
   height: 100%;
-  border: solid rgba(255, 255, 255, 0.7) 2px;
+  border: solid rgba(255, 255, 255, 1) 2px;
 }
 
 #record-player-shell-mid,
@@ -60,13 +61,14 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.3);
   border-radius: 50%;
   text-align: center;
   opacity: 0;
 }
 
 #record-player-pause span {
+  color: white;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -88,7 +90,7 @@
   top: -70%;
   right: -85px;
   width: 250px;
-  height: 10px;
+  height: 8px;
   background: linear-gradient(to right, #555555, #222222);
   border: 2px solid rgba(0, 0, 0, 0.5);
   border-left: 6px solid rgb(232, 194, 96);
