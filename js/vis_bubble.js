@@ -32,7 +32,7 @@ class BubblePlayerViz {
     ];
 
     this.simulation = d3.forceSimulation(this.nodes)
-      .force("charge", d3.forceManyBody().strength(-0.01 * Math.min(this.width, this.height)))
+      .force("charge", d3.forceManyBody().strength(-0.001 * Math.min(this.width, this.height)))
       .force("center", d3.forceCenter(this.width / 2, this.height / 2))
       .force("collision", d3.forceCollide().radius(d => d["Weeks in Charts"]))
       .on("tick", () => this.ticked());
@@ -41,7 +41,23 @@ class BubblePlayerViz {
   render() {
     const radiusScale = d3.scaleLinear()
       .domain([0, d3.max(this.data, d => +d["Weeks in Charts"])])
-      .range([5,  Math.min(this.width, this.height) * 0.09]);
+      .range([5,  Math.min(this.width, this.height) * 0.08]);
+
+      let defs = this.svg.select("defs");
+      if (defs.empty()) defs = this.svg.append("defs");
+
+    const filter = defs.append("filter")
+      .attr("id", "shadow")
+      .attr("x", "-50%")
+      .attr("y", "-50%")
+      .attr("width", "200%")
+      .attr("height", "200%");
+
+    filter.append("feDropShadow")
+      .attr("dx", 2)
+      .attr("dy", 2)
+      .attr("stdDeviation", 2)
+      .attr("flood-color", "rgba(0,0,0,0.4)");
 
     this.circles = this.svg.selectAll("circle")
       .data(this.nodes.filter(d => !d.isCenter), d => d.id)
@@ -68,6 +84,7 @@ class BubblePlayerViz {
       })
       .attr("opacity", 0.7)
       .attr("class", "bubble-viz-bubble")
+      .attr("filter", "url(#shadow)")
       .on("mouseover", (event, d) => this.showTooltip(event, d))
       .on("mousemove", (event) => this.moveTooltip(event))
       .on("mouseleave", () => this.hideTooltip())
@@ -81,6 +98,8 @@ class BubblePlayerViz {
       .attr("dy", ".35em")
       .attr("class", "unselectable bubble-viz-player-label")
       .style("stroke", "white");
+
+    this.startFloatingEffect();
   }
 
   ticked() {
@@ -135,7 +154,6 @@ class BubblePlayerViz {
         <strong style="font-size: 1.4em;">${d.Song} - ${d.Artist}</strong><br>
         Charted Date: ${chartedDate} <br>
         Weeks charted: ${parseInt(d["Weeks in Charts"])} <br>
-        Peak Position: ${d["Peak Position"]} <br>
       `);
     this.moveTooltip(event);
   }
@@ -190,6 +208,29 @@ class BubblePlayerViz {
       return "▶";
     });
   }
+
+  startFloatingEffect() {
+    const amplitude = Math.min(this.width, this.height) * 0.002;
+    const speed = 0.0015; // smaller = slower
+
+    // Give each node a random phase offset so they move independently
+    this.nodes.forEach(d => d._floatPhase = Math.random() * Math.PI * 2);
+
+    const animate = () => {
+      const now = Date.now();
+
+      this.circles
+        .attr("cy", d => d.y + Math.sin(now * speed + d._floatPhase) * amplitude);
+
+      this.labels
+        .attr("y", d => d.y + Math.sin(now * speed + d._floatPhase) * amplitude);
+
+      requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
+  }
+
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -198,13 +239,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /**
      * TODO Improve bubble graph
-     * 4. Use exponential function to transform bubble size so the size is more varied
      * 5. Update data for some songs
      */
     new BubblePlayerViz({
       selector: "#bubble-viz",
       centerSelector: "#bubble-viz-container",
-      data: data.toSorted((a, b) => b["Weeks in Charts"] - a["Weeks in Charts"]).filter(d => d.Year >= 1980),
+      data: data.filter(d => d.Year >= 1980).toSorted((a, b) => b["Weeks in Charts"] - a["Weeks in Charts"]),
       recordPlayer: recordPlayer,
     });
   });
