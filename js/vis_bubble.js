@@ -158,6 +158,11 @@ class BubblePlayerViz {
       this.activeBubble.attr("stroke", null).attr("stroke-width", null).attr("opacity", 0.7);
     }
 
+    this.activeBubble = d3.select(event.currentTarget)
+      .attr("stroke", "#000")
+      .attr("stroke-width", 3)
+      .attr("opacity", 1);
+
     if (d.Year === this.currentSongId && !this.recordPlayer.isPaused()) {
       this.updateLabels(d.Year, false);
       this.recordPlayer.pause();
@@ -167,16 +172,9 @@ class BubblePlayerViz {
     if (d.Year !== this.currentSongId) {
       await this.recordPlayer.load(songUrl, d["Image URL"]);
     }
-    
+
     this.recordPlayer.play();
-
     this.currentSongId = d.Year;
-
-    this.activeBubble = d3.select(event.currentTarget)
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 3)
-      .attr("opacity", 1);
-
     this.updateLabels(d.Year, true);
   }
 
@@ -194,10 +192,17 @@ document.addEventListener("DOMContentLoaded", () => {
   d3.csv("data/processed/top_hot_100_per_year.csv").then((data) => {
     const recordPlayer = new VinylRecord();
 
+    /**
+     * TODO Improve bubble graph
+     * 2. Fix border not highlighted on first bubble click bug
+     * 3. Make circle size dynamic
+     * 4. Use exponential function to transform bubble size so the size is more varied
+     * 5. Update data for some songs
+     */
     new BubblePlayerViz({
       selector: "#bubble-viz",
       centerSelector: "#bubble-viz-container",
-      data: data.toSorted((a, b) => b["Weeks in Charts"] - a["Weeks in Charts"]),
+      data: data.toSorted((a, b) => b["Weeks in Charts"] - a["Weeks in Charts"]).filter(d => d.Year >= 1980),
       recordPlayer: recordPlayer,
     });
   });
