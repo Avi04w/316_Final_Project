@@ -212,9 +212,14 @@ export class SceneManager {
         title.textContent = 'Loading Vectors';
         legend.appendChild(title);
         
+        // Track visibility state for each feature
+        this.vectorVisibility = {};
+        
         Object.entries(this.featureColors).forEach(([feature, colorHex]) => {
             const item = document.createElement('div');
             item.className = 'legend-item';
+            item.style.cursor = 'pointer';
+            item.dataset.feature = feature;
             
             const colorBox = document.createElement('div');
             colorBox.className = 'legend-color-box';
@@ -226,6 +231,15 @@ export class SceneManager {
             
             item.appendChild(colorBox);
             item.appendChild(label);
+            
+            // Initialize as visible (since loadings start visible when checkbox is checked)
+            this.vectorVisibility[feature] = true;
+            
+            // Add click handler to toggle individual vector
+            item.addEventListener('click', () => {
+                this.toggleIndividualVector(feature);
+            });
+            
             legend.appendChild(item);
         });
         
@@ -234,12 +248,51 @@ export class SceneManager {
     }
     
     /**
+     * Toggle visibility of a single loading vector
+     */
+    toggleIndividualVector(feature) {
+        // Toggle the visibility state
+        this.vectorVisibility[feature] = !this.vectorVisibility[feature];
+        const isVisible = this.vectorVisibility[feature];
+        
+        // Update the arrow visibility
+        this.loadingArrows.forEach(arrow => {
+            if (arrow.userData.feature === feature) {
+                arrow.visible = isVisible;
+            }
+        });
+        
+        // Update the legend item appearance
+        const legendItem = this.loadingVectorLegend.querySelector(`[data-feature="${feature}"]`);
+        if (legendItem) {
+            if (isVisible) {
+                legendItem.style.opacity = '1';
+                legendItem.style.textDecoration = 'none';
+            } else {
+                legendItem.style.opacity = '0.4';
+                legendItem.style.textDecoration = 'line-through';
+            }
+        }
+        
+        console.log(`Loading vector '${feature}' ${isVisible ? 'shown' : 'hidden'}`);
+    }
+    
+    /**
      * Toggle visibility of loading arrows and legend
      */
     toggleLoadingArrows(visible, onToggle = null) {
-        this.loadingArrows.forEach(arrow => {
-            arrow.visible = visible;
-        });
+        if (visible) {
+            // When showing, respect individual vector visibility states
+            this.loadingArrows.forEach(arrow => {
+                const feature = arrow.userData.feature;
+                arrow.visible = this.vectorVisibility && this.vectorVisibility[feature] !== false;
+            });
+        } else {
+            // When hiding all, hide everything
+            this.loadingArrows.forEach(arrow => {
+                arrow.visible = false;
+            });
+        }
         
         if (this.loadingVectorLegend) {
             if (visible) {
