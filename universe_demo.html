@@ -86,7 +86,7 @@
             
             <div class="control-section">
                 <label>
-                    <input type="checkbox" id="show-loadings" style="margin-right: 10px;">
+                    <input type="checkbox" id="show-loadings">
                     Show Loading Vectors
                 </label>
             </div>
@@ -115,9 +115,9 @@
                     <div class="year">—</div>
                     <div class="date-range">No year selected</div>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button id="play-timeline" style="flex: 1;">▶ Play</button>
-                    <button id="clear-billboard" class="hidden" style="flex: 1;">Clear Billboard</button>
+                <div class="button-group">
+                    <button id="play-timeline" class="button-flex">▶ Play</button>
+                    <button id="clear-billboard" class="hidden button-flex">Clear Billboard</button>
                 </div>
             </div>
         </div>
@@ -125,68 +125,43 @@
     </div>
     
     <div id="scroll-hint">↓ Scroll to explore ↓</div>
+    
+    <!-- Page indicator dots -->
+    <div id="page-indicator">
+        <div class="page-dot active" data-page="0"></div>
+        <div class="page-dot" data-page="1"></div>
+        <div class="page-dot" data-page="2"></div>
+        <div class="page-dot" data-page="3"></div>
+    </div>
 </div>
 
 <!-- Page 4: Additional Visualization (scrolls independently) -->
 <div class="page">
-    <div class="content-box" style="width: 100vw; max-width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center;">
-        <div style="text-align: center;">
+    <div class="content-box fullscreen-content">
+        <div class="centered-content">
             <h2>Additional Visualization</h2>
             <p>This is a placeholder area for another visualization or demo.</p>
             <img src="https://www.stockvault.net/data/2008/03/09/104660/thumb16.jpg" 
                  alt="Placeholder visualization" 
-                 style="max-width: 80%; height: auto; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px;">
+                 class="placeholder-image">
         </div>
     </div>
 </div>
 
 <div class="page">
-    <div class="content-box" style="width: 100vw; max-width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center;">
-        <div style="text-align: center;">
+    <div class="content-box fullscreen-content">
+        <div class="centered-content">
             <h2>Additional Visualization 2</h2>
             <p>This is a placeholder area for another visualization or demo.</p>
             <img src="https://www.stockvault.net/data/2008/03/09/104660/thumb16.jpg" 
                  alt="Placeholder visualization" 
-                 style="max-width: 80%; height: auto; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px;">
+                 class="placeholder-image">
         </div>
     </div>
 </div>
 
 <script type="module" src="js/vis_universe.js"></script>
-
-<script>
-// Show/hide scroll hint based on scroll position
-(function() {
-    const scrollHint = document.getElementById('scroll-hint');
-    let hideTimeout = null;
-    
-    function updateScrollHint() {
-        const scrollY = window.scrollY || document.documentElement.scrollTop;
-        
-        if (scrollY <= 50) {
-            // Near the top - show the hint
-            clearTimeout(hideTimeout);
-            scrollHint.style.display = 'block';
-            // Force reflow to restart animation
-            scrollHint.offsetHeight;
-            scrollHint.classList.remove('hide');
-        } else {
-            // Scrolled down - hide the hint
-            scrollHint.classList.add('hide');
-            clearTimeout(hideTimeout);
-            hideTimeout = setTimeout(() => {
-                scrollHint.style.display = 'none';
-            }, 500);
-        }
-    }
-    
-    // Check on page load
-    updateScrollHint();
-    
-    // Update on scroll
-    window.addEventListener('scroll', updateScrollHint);
-})();
-</script>
+<script src="js/page_navigation.js"></script>
 
 </body>
 </html>
