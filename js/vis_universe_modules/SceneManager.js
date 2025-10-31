@@ -85,6 +85,8 @@ export class SceneManager {
         
         // Add helpers
         const axesHelper = new THREE.AxesHelper(10);
+        axesHelper.material.opacity = 0.5;
+        axesHelper.material.transparent = true;
         this.scene.add(axesHelper);
         
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
