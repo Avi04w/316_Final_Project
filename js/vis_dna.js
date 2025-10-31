@@ -7,16 +7,16 @@ class VisDNA {
 
         this.scrollOffset = 0;
 
-        this.torsion = 0.2;
+        this.torsion = 0.3;
         this.features = ["acousticness", "danceability", "energy", "liveness", "tempo", "valence"];
 
         // darker low-end colors for better contrast
         this.colorScales = {
-            acousticness: d3.scaleSequential(d3.interpolateRgb("#bde0ff", "#012b42")),
-            danceability: d3.scaleSequential(d3.interpolateRgb("#f4a5c4", "#230465")),
-            energy:       d3.scaleSequential(d3.interpolateRgb("#ff976c", "#651b00")),
-            liveness:     d3.scaleSequential(d3.interpolateRgb("#7affc7", "#064324")),
-            tempo:        d3.scaleSequential(d3.interpolateRgb("#5e0000", "#ffaaaa")), // blue(slow)->red(fast)
+            acousticness: d3.scaleSequential(d3.interpolateRgb("#d5e9ff", "#012b42")),
+            danceability: d3.scaleSequential(d3.interpolateRgb("#ffc7de", "#230465")),
+            energy:       d3.scaleSequential(d3.interpolateRgb("#fbc4af", "#651b00")),
+            liveness:     d3.scaleSequential(d3.interpolateRgb("#b3ffc3", "#003e1f")),
+            tempo:        d3.scaleSequential(d3.interpolateRgb("#ffabab", "#5e0000")), // blue(slow)->red(fast)
             valence:      d3.scaleSequential(d3.interpolateRgb("#083957", "#c8c209")),
         };
 
@@ -92,19 +92,25 @@ class VisDNA {
         window.addEventListener("scroll", () => {
             // Adjust spin rate; tweak divisor for sensitivity
             const scrollY = window.scrollY || document.documentElement.scrollTop;
-            this.scrollOffset = scrollY * 0.005; // 0.005 = spin sensitivity
+            this.scrollOffset = scrollY * 0.01;
         });
 
         this.loadData();
     }
 
     async loadData() {
-        const raw = await d3.csv("data/processed/temp_dataset.csv", d3.autoType);
+        // --- Load and parse NDJSON file ---
+        const text = await d3.text("data/processed/billboard_full.ndjson");
+        const lines = text.trim().split("\n");
+        const raw = lines.map(line => JSON.parse(line));
+
+        // --- Filter valid entries (with date + features) ---
         const filtered = raw.filter(d => {
             const year = new Date(d.date).getFullYear();
             return year >= 1980 && !isNaN(year);
         });
 
+        // --- Group by year and compute yearly averages ---
         const grouped = d3.rollups(
             filtered,
             v => ({
@@ -118,6 +124,7 @@ class VisDNA {
             d => new Date(d.date).getFullYear()
         );
 
+        // --- Prepare and sort data ---
         this.yearData = grouped
             .map(([year, values]) => ({ year, ...values }))
             .sort((a, b) => a.year - b.year);
@@ -125,7 +132,7 @@ class VisDNA {
         this.numX = this.yearData.length;
         this.x.domain([0, this.numX - 1]);
 
-        // initialize per-bar focus array
+        // --- Initialize visualization ---
         this.focus = new Array(this.numX).fill(0);
 
         this.createDropdown();
@@ -135,10 +142,21 @@ class VisDNA {
         this.animate();
     }
 
+
     createDropdown() {
         const container = d3.select(this.selector);
+        // insert a label before the SVG so it appears to the left of the dropdown
+        const label = container.insert("label", "svg")
+            .attr("for", "feature-select")
+            .style("margin-bottom", "12px")
+            .style("margin-right", "8px")
+            .style("font-size", "14px")
+            .style("color", "#333")
+            .style("vertical-align", "middle")
+            .text("Select a Feature:");
         const dropdown = container.insert("select", "svg")
             .attr("id", "feature-select")
+            .style("display", "inline-block")
             .style("margin-bottom", "12px")
             .style("padding", "8px 14px")
             .style("font-size", "14px")
@@ -167,13 +185,7 @@ class VisDNA {
     setColorScales() {
         const vals = this.yearData.map(d => d[this.feature]);
         const [min, max] = d3.extent(vals);
-
-        // Tempo: blue → red (slow → fast)
-        if (this.feature === "tempo") {
-            this.colorScales[this.feature].domain([max, min]);
-        } else {
-            this.colorScales[this.feature].domain([min, max]);
-        }
+        this.colorScales[this.feature].domain([min, max]);
     }
 
     drawXAxis() {
@@ -284,7 +296,7 @@ class VisDNA {
     generateData(centerX) {
         const center = this.x.invert(centerX);
         const data = d3.range(this.numX).map((i) => {
-            const t = (i - center) * this.torsion - this.scrollOffset + 2;
+            const t = (i - center) * this.torsion - this.scrollOffset;
             const yearObj = this.yearData[i];
             const colorVal = this.colorScales[this.feature](yearObj[this.feature]);
             return [
@@ -341,7 +353,7 @@ class VisDNA {
                 // update mouseX to keep the animation flowing
                 const [x] = d3.pointer(event, this.svg.node());
                 this.mouseX = Math.max(0, Math.min(this.width, x));
-                
+
                 // update tooltip position
                 this.tooltip
                     .style("left", (event.pageX + 12) + "px")
