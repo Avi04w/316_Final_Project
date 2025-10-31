@@ -5,7 +5,7 @@ class VisDNA {
         this.height = config.height || 380;
         this.margin = { top: 30, right: 40, bottom: 110, left: 50 };
 
-        this.scrollOffset = 0
+        this.scrollOffset = 0;
 
         this.torsion = 0.2;
         this.features = ["acousticness", "danceability", "energy", "liveness", "tempo", "valence"];
@@ -284,7 +284,8 @@ class VisDNA {
     generateData(centerX) {
         const center = this.x.invert(centerX);
         const data = d3.range(this.numX).map((i) => {
-            const t = (i - center) * this.torsion - this.scrollOffset;
+            // Add π/2 phase offset so the helix center aligns with cursor
+            const t = (i - center) * this.torsion - this.scrollOffset + 2;
             const yearObj = this.yearData[i];
             const colorVal = this.colorScales[this.feature](yearObj[this.feature]);
             return [
@@ -338,8 +339,11 @@ class VisDNA {
                     .style("top", (event.pageY - 28) + "px");
             })
             .on("mousemove", (event) => {
-                // while hovering keep tooltip following and nudge the phase center target so motion feels anchored
-                this.targetPhaseCenter = this.x(i);
+                // update mouseX to keep the animation flowing
+                const [x] = d3.pointer(event, this.svg.node());
+                this.mouseX = Math.max(0, Math.min(this.width, x));
+                
+                // update tooltip position
                 this.tooltip
                     .style("left", (event.pageX + 12) + "px")
                     .style("top", (event.pageY - 28) + "px");
