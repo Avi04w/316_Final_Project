@@ -1,4 +1,12 @@
-// js/vis_dna_yearly.js
+const FEATURE_BOUNDS = {
+    acousticness: [0, 0.7],
+    danceability: [0.20, 1],
+    energy:       [0.2, 1],
+    liveness:     [0, 0.75],
+    tempo:        [60, 190],
+    valence:      [0, 1]
+};
+
 (function () {
     class VisDNAYearly {
         constructor(selector, config = {}) {
@@ -16,7 +24,7 @@
                 energy:       d3.scaleSequential(d3.interpolateRgb("#fbc4af", "#651b00")),
                 liveness:     d3.scaleSequential(d3.interpolateRgb("#b3ffc3", "#003e1f")),
                 tempo:        d3.scaleSequential(d3.interpolateRgb("#ffabab", "#5e0000")), // blue(slow)->red(fast)
-                valence:      d3.scaleSequential(d3.interpolateRgb("#083957", "#c8c209")),
+                valence:      d3.scaleSequential(d3.interpolateRgb("#083957", "#ded700")),
             };
 
             // short human-readable descriptions (used by the legend description)
@@ -115,7 +123,7 @@
             this.title.text(`Top 10 Longest Charting Songs of ${this.year} • ${this.feature.charAt(0).toUpperCase() + this.feature.slice(1)}`);
 
             const colorScale = this.colorScales[this.feature];
-            const [min, max] = d3.extent(data, d => d.value);
+            const [min, max] = FEATURE_BOUNDS[this.feature];
             colorScale.domain([min, max]);
 
             // --- Adjust grid layout ---

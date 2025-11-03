@@ -7,7 +7,7 @@ class VisDNA {
 
         this.scrollOffset = 0;
 
-        this.torsion = 0.3;
+        this.torsion = 0.2;
         this.features = ["acousticness", "danceability", "energy", "liveness", "tempo", "valence"];
 
         // darker low-end colors for better contrast
@@ -17,7 +17,7 @@ class VisDNA {
             energy:       d3.scaleSequential(d3.interpolateRgb("#fbc4af", "#651b00")),
             liveness:     d3.scaleSequential(d3.interpolateRgb("#b3ffc3", "#003e1f")),
             tempo:        d3.scaleSequential(d3.interpolateRgb("#ffabab", "#5e0000")), // blue(slow)->red(fast)
-            valence:      d3.scaleSequential(d3.interpolateRgb("#083957", "#c8c209")),
+            valence:      d3.scaleSequential(d3.interpolateRgb("#083957", "#ded700")),
         };
 
 
