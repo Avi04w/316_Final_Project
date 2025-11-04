@@ -870,7 +870,9 @@ function initializeMap(worldTopo) {
 
   mapWidth = Number(mapSvgSelection.attr('width')) || 960;
   mapHeight = Number(mapSvgSelection.attr('height')) || 540;
-  mapSvgSelection.attr('viewBox', `0 0 ${mapWidth} ${mapHeight}`);
+  mapSvgSelection
+    .attr('viewBox', `0 0 ${mapWidth} ${mapHeight}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet');
 
   const geojson = feature(worldTopo, worldTopo.objects.countries);
   countryFeatures = geojson.features.filter((f) => {
@@ -885,7 +887,17 @@ function initializeMap(worldTopo) {
       .filter(([id]) => Number.isFinite(id))
   );
 
-  projection = d3.geoNaturalEarth1().fitSize([mapWidth, mapHeight], { type: 'Sphere' });
+  projection = d3.geoNaturalEarth1().fitExtent(
+    [
+      [20, 20],
+      [mapWidth - 20, mapHeight - 20],
+    ],
+    { type: 'FeatureCollection', features: countryFeatures }
+  );
+  projection = projection.clipExtent([
+    [60, 20],
+    [mapWidth - 60, mapHeight - 20],
+  ]);
   pathGenerator = d3.geoPath(projection);
 
   choroplethLayer = mapSvgSelection.append('g').attr('data-layer', 'countries');

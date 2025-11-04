@@ -30,8 +30,7 @@ main {
 }
 
 .panel {
-  min-height: 280px;
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(18, 19, 26, 0.08);
@@ -111,11 +110,13 @@ main {
   position: relative;
   width: 100%;
   overflow: hidden;
+  border-radius: 12px;
+  /* background: #eef0f7; */
 }
 
 #map {
   width: 100%;
-  height: auto;
+  height: 100%;
   max-width: 100%;
   display: block;
 }
@@ -203,7 +204,7 @@ main {
 }
 
 .sparkline-section {
-  margin-top: 1.75rem;
+  margin-top: 1.5rem;
 }
 
 .sparkline-heading {
@@ -306,7 +307,7 @@ main {
 }
 
 .stats-card {
-  margin-top: 1.25rem;
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -334,14 +335,13 @@ main {
 
 footer {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-  padding: 1.5rem 2rem 2.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.25rem 1.75rem 1.75rem;
 }
 
 .footer-slot {
-  min-height: 180px;
-  padding: 1.25rem;
+  padding: 1rem 1.25rem;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 24px rgba(18, 19, 26, 0.06);
