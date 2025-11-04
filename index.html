@@ -40,7 +40,7 @@
                 <div id="record-player-shell-mid">
                     <div id="record-player-shell-in">
                         <div id="record-player-image-container">
-                            <img id="record-player-image" style="display:none;" src="" class="unselectable" />
+                            <img id="record-player-image" style="display:none;" src="" alt="Record player" class="unselectable" />
                             <div id="record-player-pause" class="unselectable"><span></span></div>
                         </div>
                     </div>
@@ -51,26 +51,6 @@
         <audio id="player"></audio>
     </section>
 
-
-    <section id="spotify-player-section">
-        <div id="spotify-player-container" class="chart-space" style="text-align:center; display: none">
-            <button id="spotify-hide-btn" class="spotify-hide-btn" aria-label="Hide Spotify player">✕</button>
-            <iframe
-                    id="spotify-iframe"
-                    data-testid="embed-iframe"
-                    class="spotify-embed"
-                    src="https://open.spotify.com/embed/track/0VjIjW4GlUZAMYd2vXMi3b?utm_source=generator"
-                    width="20%" height="152"
-                    frameBorder="0"
-                    allowfullscreen=""
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                    title="Spotify Player"
-                    aria-label="Spotify Player">
-            </iframe>
-        </div>
-        <button id="spotify-show-btn" title="Show Spotify player" aria-label="Show Spotify player" style="display:none">♫</button>
-    </section>
 
 
     <section class="vis-section snap" id="universe-section">
@@ -133,6 +113,26 @@
     </section>
 
 </div> <!-- /.pageScroller -->
+
+<section id="spotify-player-section">
+    <div id="spotify-player-container" class="chart-space" style="text-align:center; display: none">
+        <button id="spotify-hide-btn" class="spotify-hide-btn" aria-label="Hide Spotify player">✕</button>
+        <iframe
+                id="spotify-iframe"
+                data-testid="embed-iframe"
+                class="spotify-embed"
+                src="https://open.spotify.com/embed/track/0VjIjW4GlUZAMYd2vXMi3b?utm_source=generator"
+                width="20%" height="152"
+                frameBorder="0"
+                allowfullscreen=""
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+                title="Spotify Player"
+                aria-label="Spotify Player">
+        </iframe>
+    </div>
+    <button id="spotify-show-btn" title="Show Spotify player" aria-label="Show Spotify player" style="display:none">♫</button>
+</section>
 
 <!-- JS Scripts -->
 <script src="js/spotify_player.js"></script>
