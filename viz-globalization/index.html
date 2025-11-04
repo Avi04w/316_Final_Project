@@ -35,15 +35,6 @@
               <input type="checkbox" id="exclude-us" data-role="exclude-us" />
               Exclude US
             </label>
-            <label class="control-label">
-              Playback speed
-              <select id="playback-speed" data-role="playback-speed">
-                <option value="100">Fast (100 ms)</option>
-                <option value="200" selected>Normal (200 ms)</option>
-                <option value="400">Slow (400 ms)</option>
-                <option value="800">Very Slow (800 ms)</option>
-              </select>
-            </label>
             <label class="control-label control-label--small">
               Top pins
               <input
@@ -71,7 +62,6 @@
           </div>
           <div class="map-legends">
             <div class="map-legend" data-role="map-legend"></div>
-            <div class="pin-legend" data-role="pin-legend"></div>
           </div>
         </div>
         <div class="map-container">
@@ -80,6 +70,7 @@
           </svg>
           <div class="map-tooltip" data-role="map-tooltip" hidden></div>
         </div>
+        <div class="pin-legend pin-legend--inline" data-role="pin-legend"></div>
       </section>
       <section class="panel panel--stats">
         <h2>Weekly Stats</h2>
@@ -169,6 +160,15 @@
             value="0"
             aria-label="Week"
           />
+          <label class="control-label control-label--small control-label--timeline">
+            Speed
+            <select id="playback-speed" data-role="playback-speed">
+              <option value="100">Fast</option>
+              <option value="200" selected>Normal</option>
+              <option value="400">Slow</option>
+              <option value="800">Very Slow</option>
+            </select>
+          </label>
         </div>
       </div>
     </footer>

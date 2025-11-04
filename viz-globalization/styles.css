@@ -23,9 +23,9 @@ header h1 {
 
 main {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 1.5rem;
-  padding: 2rem;
+  grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  padding: 1.75rem;
   align-items: start;
 }
 
@@ -104,6 +104,7 @@ main {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.6rem;
+  min-width: 140px;
 }
 
 .map-container {
@@ -141,13 +142,20 @@ main {
 }
 
 .pin-legend {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.35rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
   font-size: 0.8rem;
   color: #384057;
-  max-width: 340px;
-  margin-top: 0.4rem;
+}
+
+.pin-legend--inline {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  background: #f6f7fb;
+  border-radius: 8px;
+  border: 1px solid rgba(40, 44, 60, 0.08);
+  width: 100%;
 }
 
 .pin-legend-item {
@@ -165,7 +173,7 @@ main {
 }
 
 .legend-heading {
-  grid-column: 1 / -1;
+  flex-basis: 100%;
   font-size: 0.75rem;
   font-weight: 600;
   color: #2d3143;
@@ -367,6 +375,7 @@ footer {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .control-button {
@@ -405,6 +414,14 @@ footer {
   min-width: 110px;
   width: 120px;
   text-align: right;
+}
+
+.control-label--timeline {
+  min-width: 120px;
+}
+
+.control-label--timeline select {
+  min-width: 120px;
 }
 
 .footer-slot h3 {
