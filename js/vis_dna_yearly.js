@@ -10,7 +10,6 @@ const FEATURE_BOUNDS = {
 (function () {
     class VisDNAYearly {
         constructor(selector, config = {}) {
-            this.selector = selector;
             this.year = config.year ?? 2000;
             this.feature = config.feature ?? "acousticness";
             this.width = config.width || 1100;
@@ -38,22 +37,44 @@ const FEATURE_BOUNDS = {
             };
 
             const container = d3.select(selector).html("");
-            container.append("button")
+            // ensure container is positioned (useful if other absolute elements are added later)
+            container.style("position", "relative");
+
+            // create SVG
+            this.svg = container.append("svg")
+                .attr("width", this.width)
+                .attr("height", this.height)
+                .style("display", "block")      // make it behave like a block element
+                .style("margin", "0 auto");
+
+            // create a back button inside the SVG at the top-right using a foreignObject
+            // width/height chosen to comfortably fit the existing button styles
+            const backButtonWidth = 110;
+            const backButtonHeight = 34;
+            // position the back button near the top-left inside the left margin
+            const backButtonX = this.margin.left + 8; // 8px padding from left margin
+            const backButtonY = 8; // small padding from top
+
+            const backFO = this.svg.append("foreignObject")
+                .attr("x", backButtonX)
+                .attr("y", backButtonY)
+                .attr("width", backButtonWidth)
+                .attr("height", backButtonHeight);
+
+            // append an xhtml container and the button so existing HTML styles/behavior are preserved
+            const foBody = backFO.append("xhtml:div")
+                .style("margin", "0");
+
+            foBody.append("button")
                 .attr("class", "dna-back-button")
-                .style("margin-bottom", "10px")
                 .style("padding", "6px 10px")
                 .style("border", "1px solid #ccc")
                 .style("border-radius", "6px")
                 .style("cursor", "pointer")
                 .style("background", "white")
+                .style("font-family", "inherit")
                 .text("← Back")
                 .on("click", () => this.goBack());
-
-            this.svg = container.append("svg")
-                .attr("width", this.width)
-                .attr("height", this.height + 100)
-                .style("display", "block")      // make it behave like a block element
-                .style("margin", "0 auto");
 
             this.title = this.svg.append("text")
                 .attr("x", this.width / 2)
@@ -62,15 +83,6 @@ const FEATURE_BOUNDS = {
                 .attr("font-size", 18)
                 .attr("font-weight", 600)
                 .attr("fill", "#222");
-
-            // subtitle (smaller text, will be set per-feature in render)
-            // this.subtitle = this.svg.append("text")
-            //     .attr("x", this.width / 2)
-            //     .attr("y", 50) // directly under the main title so it's visible
-            //     .attr("text-anchor", "middle")
-            //     .attr("font-size", 12)
-            //     .attr("fill", "#555")
-            //     .text("");
 
             this.phase = 0;
             this.helixData = [];
@@ -144,10 +156,10 @@ const FEATURE_BOUNDS = {
             const verticalSpacingFactor = 1.5; // increases row gap
 
             const helixWidth = ((this.width - this.margin.left - this.margin.right) / cols) / horizontalCompression;
-            const helixHeight = ((this.height - this.margin.top - this.margin.bottom - 60) / rows) * verticalSpacingFactor;
+            const helixHeight = ((this.height - this.margin.top - this.margin.bottom - 150) / rows) * verticalSpacingFactor;
 
             const g = this.svg.append("g")
-                .attr("transform", `translate(${this.margin.left}, ${this.margin.top + 60})`);
+                .attr("transform", `translate(${this.margin.left}, ${this.margin.top + 30})`);
 
             this.helixData = data.map((d, i) => {
                 const col = i % cols;

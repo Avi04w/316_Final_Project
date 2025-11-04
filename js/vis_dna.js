@@ -66,17 +66,21 @@ class VisDNA {
         this.container = this.svg.append("g");
 
         // Tooltip div
-        this.tooltip = d3.select(this.selector)
+        // append tooltip to body so fixed positioning is independent of container transforms / display
+        this.tooltip = d3.select("body")
             .append("div")
-            .attr("class", "dna-tooltip")
-            .style("position", "absolute")
-            .style("padding", "6px 10px")
-            .style("background", "rgba(0, 0, 0, 0.75)")
-            .style("color", "white")
-            .style("border-radius", "5px")
-            .style("font-size", "12px")
-            .style("pointer-events", "none")
-            .style("opacity", 0);
+             .attr("class", "dna-tooltip")
+             // use fixed positioning so the tooltip is positioned relative to the viewport
+             // (prevents offsets when parent containers have CSS transforms during transitions)
+             .style("position", "fixed")
+             .style("z-index", 10000)
+             .style("padding", "6px 10px")
+             .style("background", "rgba(0, 0, 0, 0.75)")
+             .style("color", "white")
+             .style("border-radius", "5px")
+             .style("font-size", "12px")
+             .style("pointer-events", "none")
+             .style("opacity", 0);
 
 
         this.axisGroup = this.svg.append("g")
@@ -347,8 +351,9 @@ class VisDNA {
                     `<strong>Year:</strong> ${yearObj.year}<br>
                      <strong>${this.feature.charAt(0).toUpperCase() + this.feature.slice(1)}:</strong> ${val.toFixed(3)}`
                 )
-                    .style("left", (event.pageX + 12) + "px")
-                    .style("top", (event.pageY - 28) + "px");
+                    // use client coordinates when tooltip is fixed-positioned
+                    .style("left", (event.clientX + 12) + "px")
+                    .style("top", (event.clientY - 28) + "px");
             })
             .on("mousemove", (event) => {
                 // update mouseX to keep the animation flowing
@@ -356,11 +361,12 @@ class VisDNA {
                 this.mouseX = Math.max(0, Math.min(this.width, x));
 
                 // update tooltip position
+                // use client coordinates for fixed-position tooltip
                 this.tooltip
-                    .style("left", (event.pageX + 12) + "px")
-                    .style("top", (event.pageY - 28) + "px");
+                    .style("left", (event.clientX + 12) + "px")
+                    .style("top", (event.clientY - 28) + "px");
             })
-            .on("mouseout", () => {
+            .on("mouseout", (event) => {
                 // stop focusing
                 this.hoveredIndex = -1;
                 // allow the regular mouse-based centering to take over (center to current mouse position)
@@ -500,7 +506,7 @@ class VisDNA {
                 // --- Instantiate yearly visualization and await render() completion ---
                 const yearlyVis = new VisDNAYearly("#vis-dna-yearly", {
                     width: 1100,
-                    height: 520,
+                    height: 500,
                     year: year,
                     feature: this.feature
                 });
