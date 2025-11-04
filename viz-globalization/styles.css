@@ -58,6 +58,13 @@ main {
   gap: 1rem;
 }
 
+.map-legends {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
 .map-container {
   position: relative;
   width: 100%;
@@ -89,6 +96,29 @@ main {
   width: 18px;
   height: 12px;
   border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.genre-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  color: #384057;
+  max-width: 340px;
+}
+
+.genre-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.genre-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 

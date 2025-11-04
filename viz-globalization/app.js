@@ -3,13 +3,13 @@ import { feature, mesh } from 'https://cdn.jsdelivr.net/npm/topojson-client@3/+e
 const d3 = window.d3;
 
 const DATA_URL = '../data/processed/billboard_full.ndjson';
-const WORLD_URL = './world-110m.json';
+const WORLD_URL = './data/world-110m.json';
 const START_DATE_STR = '1980-01-01';
 const IGNORED_CODES = new Set(['XW', 'XE', 'AF', 'EU', 'AS', 'OC', 'NA', 'SA', 'XX', 'ZZ', 'AQ']);
 
 const TOP_METRICS_N = 100;
 const TOP_PIN_N = 10;
-const WINDOW_WEEKS = 8;
+const WINDOW_WEEKS = 52;
 const EXCLUDE_US = false;
 // TODO: Add decade filter controls to focus the timeline and sparklines.
 // TODO: Introduce country/genre filter controls to refine the map, pins, and metrics.
@@ -86,6 +86,7 @@ let sparklineSeriesByKey = new Map();
 let sparklineDomains = new Map();
 const sparklineStates = new Map();
 const sparklineValueEls = new Map();
+const genresSet = new Set(['Unknown']);
 
 const START_DATE = new Date(`${START_DATE_STR}T00:00:00Z`);
 
@@ -100,6 +101,7 @@ let timelineWeekIndexEl = null;
 let timelineRangeEl = null;
 let playPauseButtonEl = null;
 let legendEl = null;
+let genreLegendEl = null;
 let tooltipEl = null;
 let mapContainerEl = null;
 let sparklineTooltipEl = null;
@@ -125,7 +127,8 @@ let borderLayer = null;
 let pinLayer = null;
 
 const choroplethColorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, 1]);
-const genreColorScale = d3.scaleOrdinal(d3.schemeTableau10).unknown('#888ba1');
+const genrePalette = d3.schemeTableau10.concat(['#999', '#c0c', '#0cc']);
+const genreColorScale = d3.scaleOrdinal(genrePalette).unknown('#888ba1');
 
 async function init() {
   try {
@@ -141,10 +144,12 @@ async function init() {
     buildRowsByWeek();
     computeWeeklyMetrics();
     buildSparklineSeries();
+    finalizeGenreScale();
 
     const worldTopo = await worldPromise;
     initializeMap(worldTopo);
     initializeSparklines();
+    renderGenreLegend();
 
     configureTimeline();
     renderForWeek(currentWeekIndex);
@@ -214,6 +219,7 @@ function normalizeRows(rawRows) {
       ? raw.genres.filter((g) => typeof g === 'string' && g.trim())
       : [];
     const genre = genreCandidates.length ? genreCandidates[0] : 'Unknown';
+    genresSet.add(genre);
 
     const originCandidates = Array.isArray(raw.country)
       ? raw.country
@@ -390,6 +396,7 @@ function cacheDomReferences() {
   timelineRangeEl = document.querySelector('[data-role="week-range"]');
   playPauseButtonEl = document.querySelector('[data-role="play-pause"]');
   legendEl = document.querySelector('[data-role="map-legend"]');
+  genreLegendEl = document.querySelector('[data-role="genre-legend"]');
   tooltipEl = document.querySelector('[data-role="map-tooltip"]');
   mapContainerEl = document.querySelector('.map-container');
   sparklineTooltipEl = document.querySelector('[data-role="sparkline-tooltip"]');
@@ -683,6 +690,35 @@ function initializeMap(worldTopo) {
     .attr('vector-effect', 'non-scaling-stroke');
 
   pinLayer = mapSvgSelection.append('g').attr('data-layer', 'pins');
+}
+
+function renderGenreLegend() {
+  if (!genreLegendEl) return;
+  genreLegendEl.textContent = '';
+
+  const genres = genreColorScale.domain();
+  if (!genres.length) {
+    const placeholder = document.createElement('span');
+    placeholder.textContent = 'No genres';
+    genreLegendEl.appendChild(placeholder);
+    return;
+  }
+
+  genres.forEach((genre) => {
+    const item = document.createElement('div');
+    item.className = 'genre-legend-item';
+
+    const swatch = document.createElement('span');
+    swatch.className = 'genre-legend-swatch';
+    swatch.style.background = genreColorScale(genre);
+
+    const label = document.createElement('span');
+    label.textContent = genre;
+
+    item.appendChild(swatch);
+    item.appendChild(label);
+    genreLegendEl.appendChild(item);
+  });
 }
 
 function initializeSparklines() {
@@ -1144,3 +1180,12 @@ export {
   play,
   pause,
 };
+function finalizeGenreScale() {
+  const sortedGenres = Array.from(genresSet).filter(Boolean);
+  sortedGenres.sort((a, b) => {
+    if (a === 'Unknown') return -1;
+    if (b === 'Unknown') return 1;
+    return a.localeCompare(b);
+  });
+  genreColorScale.domain(sortedGenres);
+}
