@@ -54,8 +54,42 @@ main {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 1rem;
+}
+
+.map-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  font-size: 0.82rem;
+  color: #2d3143;
+}
+
+.control-label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.control-label select {
+  min-width: 140px;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid #ccd1e4;
+  font-size: 0.85rem;
+}
+
+.control-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+}
+
+.control-checkbox input {
+  margin: 0;
 }
 
 .map-legends {
@@ -99,7 +133,7 @@ main {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.genre-legend {
+.pin-legend {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 0.35rem 0.75rem;
@@ -108,18 +142,30 @@ main {
   max-width: 340px;
 }
 
-.genre-legend-item {
+.pin-legend {
+  margin-top: 0.4rem;
+}
+
+.pin-legend-item {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   white-space: nowrap;
 }
 
-.genre-legend-swatch {
+.pin-legend-swatch {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.legend-heading {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2d3143;
+  margin-bottom: 0.1rem;
 }
 
 .map-tooltip {

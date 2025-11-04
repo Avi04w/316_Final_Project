@@ -14,9 +14,31 @@
       <section class="panel panel--map">
         <div class="map-header">
           <h2>Global Origins Map</h2>
+          <div class="map-controls" data-role="map-controls">
+            <label class="control-label">
+              Pin colors
+              <select id="pin-color-mode" data-role="pin-color-mode">
+                <option value="origin-region">Origin region</option>
+                <option value="genre-supergroup">Genre supergroup</option>
+                <option value="none">None</option>
+              </select>
+            </label>
+            <label class="control-label">
+              Choropleth
+              <select id="choropleth-mode" data-role="choropleth-mode">
+                <option value="weekly-share">Weekly share</option>
+                <option value="cumulative-share">Cumulative share</option>
+                <option value="first-activation">First activation</option>
+              </select>
+            </label>
+            <label class="control-checkbox">
+              <input type="checkbox" id="exclude-us" data-role="exclude-us" />
+              Exclude US
+            </label>
+          </div>
           <div class="map-legends">
             <div class="map-legend" data-role="map-legend"></div>
-            <div class="genre-legend" data-role="genre-legend"></div>
+            <div class="pin-legend" data-role="pin-legend"></div>
           </div>
         </div>
         <div class="map-container">

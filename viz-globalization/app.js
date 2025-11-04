@@ -9,7 +9,7 @@ const IGNORED_CODES = new Set(['XW', 'XE', 'AF', 'EU', 'AS', 'OC', 'NA', 'SA', '
 
 const TOP_METRICS_N = 100;
 const TOP_PIN_N = 10;
-const WINDOW_WEEKS = 52;
+const WINDOW_WEEKS = 8;
 const EXCLUDE_US = false;
 // TODO: Add decade filter controls to focus the timeline and sparklines.
 // TODO: Introduce country/genre filter controls to refine the map, pins, and metrics.
@@ -86,7 +86,6 @@ let sparklineSeriesByKey = new Map();
 let sparklineDomains = new Map();
 const sparklineStates = new Map();
 const sparklineValueEls = new Map();
-const genresSet = new Set(['Unknown']);
 
 const START_DATE = new Date(`${START_DATE_STR}T00:00:00Z`);
 
@@ -101,10 +100,13 @@ let timelineWeekIndexEl = null;
 let timelineRangeEl = null;
 let playPauseButtonEl = null;
 let legendEl = null;
-let genreLegendEl = null;
+let pinLegendEl = null;
 let tooltipEl = null;
 let mapContainerEl = null;
 let sparklineTooltipEl = null;
+let choroplethModeSelectEl = null;
+let pinColorModeSelectEl = null;
+let excludeUsCheckboxEl = null;
 
 const statElements = {
   nonUSShare: null,
@@ -125,10 +127,110 @@ let choroplethLayer = null;
 let choroplethSelection = null;
 let borderLayer = null;
 let pinLayer = null;
+let currentChoroplethMode = 'weekly-share';
+let currentPinColorMode = 'origin-region';
+let excludeUs = EXCLUDE_US;
 
 const choroplethColorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, 1]);
-const genrePalette = d3.schemeTableau10.concat(['#999', '#c0c', '#0cc']);
-const genreColorScale = d3.scaleOrdinal(genrePalette).unknown('#888ba1');
+const neutralPinColor = '#444';
+
+const regionColors = {
+  Africa: '#1f77b4',
+  Americas: '#ff7f0e',
+  Asia: '#2ca02c',
+  Europe: '#d62728',
+  Oceania: '#9467bd',
+  'Middle East': '#8c564b',
+  Other: '#7f7f7f',
+};
+
+const regionMapping = {
+  US: 'Americas',
+  PR: 'Americas',
+  CA: 'Americas',
+  MX: 'Americas',
+  BR: 'Americas',
+  AR: 'Americas',
+  CL: 'Americas',
+  CO: 'Americas',
+  PE: 'Americas',
+  VE: 'Americas',
+  UY: 'Americas',
+  CR: 'Americas',
+  JM: 'Americas',
+  GB: 'Europe',
+  UK: 'Europe',
+  IE: 'Europe',
+  FR: 'Europe',
+  DE: 'Europe',
+  ES: 'Europe',
+  IT: 'Europe',
+  NL: 'Europe',
+  BE: 'Europe',
+  SE: 'Europe',
+  NO: 'Europe',
+  FI: 'Europe',
+  DK: 'Europe',
+  CH: 'Europe',
+  AT: 'Europe',
+  GR: 'Europe',
+  PT: 'Europe',
+  PL: 'Europe',
+  UA: 'Europe',
+  RU: 'Europe',
+  KR: 'Asia',
+  CN: 'Asia',
+  TW: 'Asia',
+  JP: 'Asia',
+  IN: 'Asia',
+  PK: 'Asia',
+  BD: 'Asia',
+  LK: 'Asia',
+  TH: 'Asia',
+  VN: 'Asia',
+  ID: 'Asia',
+  SG: 'Asia',
+  HK: 'Asia',
+  MY: 'Asia',
+  PH: 'Asia',
+  AU: 'Oceania',
+  NZ: 'Oceania',
+  SA: 'Middle East',
+  AE: 'Middle East',
+  QA: 'Middle East',
+  KW: 'Middle East',
+  BH: 'Middle East',
+  OM: 'Middle East',
+  IL: 'Middle East',
+  TR: 'Middle East',
+  ZA: 'Africa',
+  NG: 'Africa',
+  GH: 'Africa',
+  CI: 'Africa',
+  EG: 'Africa',
+  MA: 'Africa',
+  DZ: 'Africa',
+  TN: 'Africa',
+  ET: 'Africa',
+  KE: 'Africa',
+  SN: 'Africa',
+};
+
+const superGenreOrder = [
+  'Pop',
+  'Hip-Hop/Rap',
+  'Rock/Metal',
+  'Electronic/Dance',
+  'R&B/Soul/Funk',
+  'Country/Folk/Americana',
+  'Latin',
+  'Reggae/Caribbean',
+  'Jazz/Blues',
+  'Other/Unknown',
+];
+const superGenreScale = d3
+  .scaleOrdinal(superGenreOrder, d3.schemeTableau10.concat(['#999', '#c7a212', '#1f9393']))
+  .unknown('#888ba1');
 
 async function init() {
   try {
@@ -144,12 +246,11 @@ async function init() {
     buildRowsByWeek();
     computeWeeklyMetrics();
     buildSparklineSeries();
-    finalizeGenreScale();
 
     const worldTopo = await worldPromise;
     initializeMap(worldTopo);
     initializeSparklines();
-    renderGenreLegend();
+    renderPinLegend();
 
     configureTimeline();
     renderForWeek(currentWeekIndex);
@@ -219,7 +320,6 @@ function normalizeRows(rawRows) {
       ? raw.genres.filter((g) => typeof g === 'string' && g.trim())
       : [];
     const genre = genreCandidates.length ? genreCandidates[0] : 'Unknown';
-    genresSet.add(genre);
 
     const originCandidates = Array.isArray(raw.country)
       ? raw.country
@@ -396,10 +496,13 @@ function cacheDomReferences() {
   timelineRangeEl = document.querySelector('[data-role="week-range"]');
   playPauseButtonEl = document.querySelector('[data-role="play-pause"]');
   legendEl = document.querySelector('[data-role="map-legend"]');
-  genreLegendEl = document.querySelector('[data-role="genre-legend"]');
+  pinLegendEl = document.querySelector('[data-role="pin-legend"]');
   tooltipEl = document.querySelector('[data-role="map-tooltip"]');
   mapContainerEl = document.querySelector('.map-container');
   sparklineTooltipEl = document.querySelector('[data-role="sparkline-tooltip"]');
+  choroplethModeSelectEl = document.querySelector('[data-role="choropleth-mode"]');
+  pinColorModeSelectEl = document.querySelector('[data-role="pin-color-mode"]');
+  excludeUsCheckboxEl = document.querySelector('[data-role="exclude-us"]');
 
   statElements.nonUSShare = document.querySelector('[data-stat="nonUSShare"]');
   statElements.uniqueOrigins = document.querySelector('[data-stat="uniqueOrigins"]');
@@ -412,6 +515,16 @@ function cacheDomReferences() {
   }
   if (sparklineTooltipEl) {
     sparklineTooltipEl.hidden = true;
+  }
+
+  if (choroplethModeSelectEl) {
+    choroplethModeSelectEl.value = currentChoroplethMode;
+  }
+  if (pinColorModeSelectEl) {
+    pinColorModeSelectEl.value = currentPinColorMode;
+  }
+  if (excludeUsCheckboxEl) {
+    excludeUsCheckboxEl.checked = excludeUs;
   }
 }
 
@@ -444,8 +557,32 @@ function setupControls() {
     timelineRangeEl.addEventListener('mouseup', handleScrubEnd);
   }
 
+  if (choroplethModeSelectEl) {
+    choroplethModeSelectEl.addEventListener('change', (event) => {
+      currentChoroplethMode = event.target.value;
+      updateMapForWeek(currentWeekIndex);
+    });
+  }
+
+  if (pinColorModeSelectEl) {
+    pinColorModeSelectEl.addEventListener('change', (event) => {
+      currentPinColorMode = event.target.value;
+      renderPinLegend();
+      updatePinsForWeek(currentWeekIndex);
+    });
+  }
+
+  if (excludeUsCheckboxEl) {
+    excludeUsCheckboxEl.addEventListener('change', (event) => {
+      excludeUs = event.target.checked;
+      updateMapForWeek(currentWeekIndex);
+    });
+  }
+
   // TODO: Add keyboard controls (space to toggle, arrows to step through weeks).
   // TODO: Allow adjusting playback speed directly in the UI.
+
+  renderPinLegend();
 }
 
 function configureTimeline() {
@@ -638,7 +775,7 @@ function updateSparklineCursors(weekIdx) {
 }
 
 function updateMapForWeek(weekIdx) {
-  updateChoroplethForWeek(weekIdx);
+  updateChoroplethForWeek(weekIdx, currentChoroplethMode, excludeUs);
   updatePinsForWeek(weekIdx);
 }
 
@@ -690,35 +827,6 @@ function initializeMap(worldTopo) {
     .attr('vector-effect', 'non-scaling-stroke');
 
   pinLayer = mapSvgSelection.append('g').attr('data-layer', 'pins');
-}
-
-function renderGenreLegend() {
-  if (!genreLegendEl) return;
-  genreLegendEl.textContent = '';
-
-  const genres = genreColorScale.domain();
-  if (!genres.length) {
-    const placeholder = document.createElement('span');
-    placeholder.textContent = 'No genres';
-    genreLegendEl.appendChild(placeholder);
-    return;
-  }
-
-  genres.forEach((genre) => {
-    const item = document.createElement('div');
-    item.className = 'genre-legend-item';
-
-    const swatch = document.createElement('span');
-    swatch.className = 'genre-legend-swatch';
-    swatch.style.background = genreColorScale(genre);
-
-    const label = document.createElement('span');
-    label.textContent = genre;
-
-    item.appendChild(swatch);
-    item.appendChild(label);
-    genreLegendEl.appendChild(item);
-  });
 }
 
 function initializeSparklines() {
@@ -838,10 +946,11 @@ function initializeSparklines() {
   }
 }
 
-function updateChoroplethForWeek(weekIdx) {
+function updateChoroplethForWeek(weekIdx, mode = currentChoroplethMode, excludeUsCurrent = excludeUs) {
   if (!choroplethSelection) return;
 
-  const { normalizedShares, maxShare } = getNormalizedSharesForWeek(weekIdx, EXCLUDE_US);
+  const clamped = clampNumber(weekIdx, 0, Math.max(0, weeks.length - 1));
+  const { normalizedShares, maxShare } = getNormalizedSharesForWeek(clamped, mode, excludeUsCurrent);
   const fillByNumericId = new Map();
   for (const [iso, share] of normalizedShares.entries()) {
     const numericId = ISO_TO_NUMERIC_ID[iso];
@@ -851,65 +960,145 @@ function updateChoroplethForWeek(weekIdx) {
   }
 
   const domainMax = maxShare > 0 ? maxShare : 0.01;
-  choroplethColorScale.domain([0, domainMax]);
+  if (mode !== 'first-activation') {
+    choroplethColorScale.domain([0, domainMax]);
+  }
+
   const transition = d3.transition().duration(200);
 
   choroplethSelection
     .transition(transition)
     .attr('fill', (d) => {
       const share = fillByNumericId.get(Number(d.id)) ?? 0;
-      return share > 0 ? choroplethColorScale(share) : '#e9ecf5';
+      if (mode === 'first-activation') {
+        return share > 0 ? '#1f9393' : '#e9ecf5';
+      }
+      const clampedShare = Math.min(share, domainMax);
+      return clampedShare > 0 ? choroplethColorScale(clampedShare) : '#e9ecf5';
     });
 
-  updateLegend(maxShare);
+  updateLegend(maxShare, mode);
 }
 
-function getNormalizedSharesForWeek(weekIdx, excludeUS = false) {
+function getWeeklyShares(weekIdx, excludeUsCurrent) {
   const weightMap = rawShareWeightsByWeekIndex.get(weekIdx);
   const totalWeight = totalWeightByWeekIndex.get(weekIdx) ?? 0;
+  if (!weightMap || totalWeight <= 0) return null;
 
-  if (!weightMap || totalWeight <= 0) {
-    return { normalizedShares: new Map(), maxShare: 0 };
+  let denominator = totalWeight;
+  if (excludeUsCurrent) {
+    denominator -= weightMap.get('US') ?? 0;
   }
+  if (denominator <= 0) return null;
 
-  let normalizingTotal = totalWeight;
-  if (excludeUS) {
-    const usWeight = weightMap.get('US') ?? 0;
-    normalizingTotal -= usWeight;
-  }
+  const shares = new Map();
+  weightMap.forEach((weight, iso) => {
+    if (excludeUsCurrent && iso === 'US') return;
+    if (weight <= 0) return;
+    shares.set(iso, weight / denominator);
+  });
 
-  if (normalizingTotal <= 0) {
-    return { normalizedShares: new Map(), maxShare: 0 };
-  }
-
-  const normalizedShares = new Map();
-  let maxShare = 0;
-
-  for (const [iso, weight] of weightMap.entries()) {
-    if (excludeUS && iso === 'US') continue;
-    const share = weight / normalizingTotal;
-    if (share <= 0) continue;
-    normalizedShares.set(iso, share);
-    maxShare = Math.max(maxShare, share);
-  }
-
-  return { normalizedShares, maxShare };
+  return shares;
 }
 
-function updateLegend(maxShare) {
+function getNormalizedSharesForWeek(weekIdx, mode = 'weekly-share', excludeUsCurrent = false) {
+  if (mode === 'first-activation') {
+    const activated = new Map();
+    for (let i = 0; i <= weekIdx; i += 1) {
+      const weekShares = getWeeklyShares(i, excludeUsCurrent);
+      if (!weekShares) continue;
+      weekShares.forEach((share, iso) => {
+        if (share > 0) {
+          activated.set(iso, 1);
+        }
+      });
+    }
+    return { normalizedShares: activated, maxShare: 1 };
+  }
+
+  if (mode === 'cumulative-share') {
+    const cumulative = new Map();
+    for (let i = 0; i <= weekIdx; i += 1) {
+      const weekShares = getWeeklyShares(i, excludeUsCurrent);
+      if (!weekShares) continue;
+      weekShares.forEach((share, iso) => {
+        cumulative.set(iso, (cumulative.get(iso) ?? 0) + share);
+      });
+    }
+
+    if (!cumulative.size) {
+      return { normalizedShares: new Map(), maxShare: 0 };
+    }
+
+    const values = Array.from(cumulative.values()).filter((value) => value > 0);
+    if (!values.length) {
+      return { normalizedShares: new Map(), maxShare: 0 };
+    }
+    const sorted = values.slice().sort((a, b) => a - b);
+    const percentileIndex = Math.floor(sorted.length * 0.95);
+    const percentileValue = sorted[Math.min(sorted.length - 1, percentileIndex)];
+    const maxShare = percentileValue || sorted[sorted.length - 1];
+
+    return { normalizedShares: cumulative, maxShare };
+  }
+
+  const weeklyShares = getWeeklyShares(weekIdx, excludeUsCurrent);
+  if (!weeklyShares || !weeklyShares.size) {
+    return { normalizedShares: new Map(), maxShare: 0 };
+  }
+
+  let maxShare = 0;
+  weeklyShares.forEach((share) => {
+    maxShare = Math.max(maxShare, share);
+  });
+  return { normalizedShares: weeklyShares, maxShare };
+}
+
+function updateLegend(maxShare, mode = 'weekly-share') {
   if (!legendEl) return;
 
   legendEl.textContent = '';
 
+  if (mode === 'first-activation') {
+    const container = document.createElement('div');
+    container.className = 'legend-swatches';
+
+    const offSwatch = document.createElement('span');
+    offSwatch.className = 'legend-swatch';
+    offSwatch.style.width = '20px';
+    offSwatch.style.height = '14px';
+    offSwatch.style.background = '#e9ecf5';
+    container.appendChild(offSwatch);
+
+    const offLabel = document.createElement('span');
+    offLabel.textContent = 'Not activated';
+    container.appendChild(offLabel);
+
+    const onSwatch = document.createElement('span');
+    onSwatch.className = 'legend-swatch';
+    onSwatch.style.width = '20px';
+    onSwatch.style.height = '14px';
+    onSwatch.style.background = '#1f9393';
+    onSwatch.style.marginLeft = '0.75rem';
+    container.appendChild(onSwatch);
+
+    const onLabel = document.createElement('span');
+    onLabel.textContent = 'Activated';
+    container.appendChild(onLabel);
+
+    legendEl.appendChild(container);
+    return;
+  }
+
   if (!Number.isFinite(maxShare) || maxShare <= 0) {
     const placeholder = document.createElement('span');
-    placeholder.textContent = 'No weekly origin data';
+    placeholder.textContent = 'No origin data';
     legendEl.appendChild(placeholder);
     return;
   }
 
   const title = document.createElement('span');
-  title.textContent = 'Share';
+  title.textContent = mode === 'cumulative-share' ? 'Cumulative share' : 'Weekly share';
 
   const swatchContainer = document.createElement('div');
   swatchContainer.className = 'legend-swatches';
@@ -924,9 +1113,9 @@ function updateLegend(maxShare) {
   });
 
   const minLabel = document.createElement('span');
-  minLabel.textContent = '0%';
+  minLabel.textContent = mode === 'cumulative-share' ? '0' : '0%';
   const maxLabel = document.createElement('span');
-  maxLabel.textContent = formatPercent(maxShare, 1);
+  maxLabel.textContent = mode === 'cumulative-share' ? formatNumber(maxShare, 2) : formatPercent(maxShare, 1);
 
   legendEl.appendChild(title);
   legendEl.appendChild(minLabel);
@@ -951,8 +1140,8 @@ function updatePinsForWeek(targetWeekIdx) {
           .attr('cy', (d) => d.position[1])
           .attr('r', 0)
           .attr('fill', (d) => d.color)
-          .attr('stroke', '#fff')
-          .attr('stroke-width', 0.8)
+          .attr('stroke', (d) => d.strokeColor)
+          .attr('stroke-width', (d) => d.strokeWidth)
           .attr('vector-effect', 'non-scaling-stroke')
           .attr('fill-opacity', 0),
       (update) => update,
@@ -969,6 +1158,8 @@ function updatePinsForWeek(targetWeekIdx) {
     .attr('cy', (d) => d.position[1])
     .attr('r', (d) => d.radius)
     .attr('fill', (d) => d.color)
+    .attr('stroke', (d) => d.strokeColor)
+    .attr('stroke-width', (d) => d.strokeWidth)
     .attr('fill-opacity', (d) => d.opacity);
 }
 
@@ -976,8 +1167,10 @@ function computePinsDataset(targetWeekIdx) {
   const results = [];
   if (!weeks.length) return results;
 
-  const start = Math.max(0, targetWeekIdx - WINDOW_WEEKS);
-  const end = Math.min(weeks.length - 1, targetWeekIdx + WINDOW_WEEKS);
+  const clampedTarget = clampNumber(targetWeekIdx, 0, weeks.length - 1);
+
+  const start = Math.max(0, clampedTarget - WINDOW_WEEKS);
+  const end = Math.min(weeks.length - 1, clampedTarget + WINDOW_WEEKS);
 
   for (let idx = start; idx <= end; idx += 1) {
     const weekRows = rowsByWeekIndex.get(idx) ?? [];
@@ -996,11 +1189,16 @@ function computePinsDataset(targetWeekIdx) {
         if (!centroid || centroid.some((value) => !Number.isFinite(value))) continue;
 
         const radius = Math.max(2, 10 - row.rank * 0.3);
-        const weeksAway = Math.abs(idx - targetWeekIdx);
+        const weeksAway = Math.abs(idx - clampedTarget);
         const ghostOpacity =
-          idx === targetWeekIdx
+          idx === clampedTarget
             ? 0.9
             : Math.max(0.05, 0.2 - (0.15 * weeksAway) / (WINDOW_WEEKS + 1));
+
+        const primaryOrigin = row.origins[0] ?? origin;
+        const color = getPinColor(row, primaryOrigin, currentPinColorMode);
+        const strokeColor = row.origins.length >= 2 ? '#ffffff' : '#222222';
+        const strokeWidth = row.origins.length >= 2 ? 1.4 : 0.8;
 
         results.push({
           id: `${idx}|${row.rank}|${row.name}|${origin}`,
@@ -1014,15 +1212,31 @@ function computePinsDataset(targetWeekIdx) {
           genre: row.genre,
           radius,
           position: centroid,
-          color: genreColorScale(row.genre || 'Unknown'),
+          color,
+          strokeColor,
+          strokeWidth,
           opacity: ghostOpacity,
-          isCurrentWeek: idx === targetWeekIdx,
+          isCurrentWeek: idx === clampedTarget,
         });
       }
     }
   }
 
   return results;
+}
+
+function getPinColor(row, origin, mode) {
+  if (mode === 'none') {
+    return neutralPinColor;
+  }
+
+  if (mode === 'genre-supergroup') {
+    const superGenre = toSuperGenre(row.genre);
+    return superGenreScale(superGenre);
+  }
+
+  const region = regionMapping[origin] ?? 'Other';
+  return regionColors[region] ?? regionColors.Other;
 }
 
 function bindPinInteractions(selection) {
@@ -1103,11 +1317,13 @@ function findWeekIndexForPointer(event, state) {
 function formatPinTooltip(pin) {
   const primaryArtist = pin.artists && pin.artists.length ? pin.artists[0] : 'Unknown Artist';
   const originLabel = pin.origins && pin.origins.length ? pin.origins.join(', ') : '—';
+  const genre = pin.genre || 'Unknown';
   return `
     <strong>#${pin.rank} · ${pin.name}</strong><br />
     ${primaryArtist}<br />
     Origins: [${originLabel}]<br />
-    Week: ${pin.dateString}
+    Week: ${pin.dateString}<br />
+    Genre: ${genre}
   `.trim();
 }
 
@@ -1130,6 +1346,114 @@ function clampNumber(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function renderPinLegend() {
+  if (!pinLegendEl) return;
+  pinLegendEl.textContent = '';
+
+  const heading = document.createElement('div');
+  heading.className = 'legend-heading';
+  if (currentPinColorMode === 'origin-region') {
+    heading.textContent = 'Pin color · Origin region';
+  } else if (currentPinColorMode === 'genre-supergroup') {
+    heading.textContent = 'Pin color · Genre supergroup';
+  } else {
+    heading.textContent = 'Pin color · None';
+  }
+  pinLegendEl.appendChild(heading);
+
+  let items = [];
+  if (currentPinColorMode === 'genre-supergroup') {
+    items = superGenreOrder.map((label) => ({
+      label,
+      color: superGenreScale(label),
+    }));
+  } else if (currentPinColorMode === 'origin-region') {
+    items = Object.keys(regionColors).map((label) => ({
+      label,
+      color: regionColors[label],
+    }));
+  } else {
+    items = [{ label: 'Neutral', color: neutralPinColor }];
+  }
+
+  items.forEach((item) => {
+    const el = document.createElement('div');
+    el.className = 'pin-legend-item';
+
+    const swatch = document.createElement('span');
+    swatch.className = 'pin-legend-swatch';
+    swatch.style.background = item.color;
+
+    const label = document.createElement('span');
+    label.textContent = item.label;
+
+    el.appendChild(swatch);
+    el.appendChild(label);
+    pinLegendEl.appendChild(el);
+  });
+}
+
+function toSuperGenre(genre) {
+  const s = (genre || 'Unknown').toLowerCase();
+  if (s.includes('hip hop') || s.includes('rap') || s.includes('drill') || s.includes('trap') || s.includes('grime')) {
+    return 'Hip-Hop/Rap';
+  }
+  if (s.includes('rock') || s.includes('metal') || s.includes('punk') || s.includes('grunge') || s.includes('emo')) {
+    return 'Rock/Metal';
+  }
+  if (
+    s.includes('edm') ||
+    s.includes('electro') ||
+    s.includes('house') ||
+    s.includes('trance') ||
+    s.includes('techno') ||
+    s.includes('dance') ||
+    s.includes('dubstep') ||
+    s.includes('euro')
+  ) {
+    return 'Electronic/Dance';
+  }
+  if (
+    s.includes('r&b') ||
+    s.includes('soul') ||
+    s.includes('motown') ||
+    s.includes('funk') ||
+    s.includes('quiet storm')
+  ) {
+    return 'R&B/Soul/Funk';
+  }
+  if (s.includes('country') || s.includes('americana') || s.includes('bluegrass') || s.includes('folk')) {
+    return 'Country/Folk/Americana';
+  }
+  if (
+    s.includes('latin') ||
+    s.includes('reggaeton') ||
+    s.includes('bachata') ||
+    s.includes('merengue') ||
+    s.includes('cumbia') ||
+    s.includes('vallenato') ||
+    s.includes('español')
+  ) {
+    return 'Latin';
+  }
+  if (
+    s.includes('reggae') ||
+    s.includes('dancehall') ||
+    s.includes('soca') ||
+    s.includes('calypso') ||
+    s.includes('ragga')
+  ) {
+    return 'Reggae/Caribbean';
+  }
+  if (s.includes('jazz') || s.includes('swing') || s.includes('bossa')) {
+    return 'Jazz/Blues';
+  }
+  if (s.includes('pop')) {
+    return 'Pop';
+  }
+  return 'Other/Unknown';
+}
+
 function exposeForDebugging() {
   window.BillboardOrigins = {
     weeks,
@@ -1147,6 +1471,33 @@ function exposeForDebugging() {
       WINDOW_WEEKS,
       playSpeedMs,
       EXCLUDE_US,
+    },
+    state: {
+      getChoroplethMode: () => currentChoroplethMode,
+      setChoroplethMode: (mode) => {
+        currentChoroplethMode = mode;
+        if (choroplethModeSelectEl) {
+          choroplethModeSelectEl.value = mode;
+        }
+        updateMapForWeek(currentWeekIndex);
+      },
+      getPinColorMode: () => currentPinColorMode,
+      setPinColorMode: (mode) => {
+        currentPinColorMode = mode;
+        if (pinColorModeSelectEl) {
+          pinColorModeSelectEl.value = mode;
+        }
+        renderPinLegend();
+        updatePinsForWeek(currentWeekIndex);
+      },
+      getExcludeUs: () => excludeUs,
+      setExcludeUs: (value) => {
+        excludeUs = Boolean(value);
+        if (excludeUsCheckboxEl) {
+          excludeUsCheckboxEl.checked = excludeUs;
+        }
+        updateMapForWeek(currentWeekIndex);
+      },
     },
     getWeekRows,
     setWeekIndex,
@@ -1180,12 +1531,3 @@ export {
   play,
   pause,
 };
-function finalizeGenreScale() {
-  const sortedGenres = Array.from(genresSet).filter(Boolean);
-  sortedGenres.sort((a, b) => {
-    if (a === 'Unknown') return -1;
-    if (b === 'Unknown') return 1;
-    return a.localeCompare(b);
-  });
-  genreColorScale.domain(sortedGenres);
-}
