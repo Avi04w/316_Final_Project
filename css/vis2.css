@@ -31,8 +31,8 @@
 /* big centered title with inline year select */
 .chart-container:has(#vis2) .chart-title {
     position: relative;
-    z-index: 100; /* make sure it stays above treemap */
-    color: var(--text-0);
+    z-index: 3;                         /* above the card/SVG */
+    /*color: #fff;*/
     font-weight: 800;
     font-size: clamp(2rem, 3vw, 2.6rem);
     line-height: 1.1;

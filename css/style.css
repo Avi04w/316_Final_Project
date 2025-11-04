@@ -1,126 +1,213 @@
-:root {
-  --bg: #0b0f16;
-  --panel-bg: #111827;
-  --card-bg: #0e1624;
-  --text: #cfd6ea;
-  --muted: #9da5be;
-  --max-copy-width: 800px;
-  --copy-size: 1.2rem;
-  --copy-line-height: 1.6;
+/* --- Global layout --- */
+html, body {
+    height: 100%;
+    overflow: hidden; /* <- this removes any extra scroll BELOW the scroller */
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: "Inter", system-ui, sans-serif;
-  margin: 0;
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    background-color: white;
+    color: #222;
+    line-height: 1.6;
 }
 
 header {
-  background: transparent;
+    text-align: center;
+    margin: 1rem 0;
 }
 
-.main-message,
-.conclusion-message,
-ul {
-  max-width: var(--max-copy-width);
-  margin: 0 auto;
-  font-size: var(--copy-size);
-  line-height: var(--copy-line-height);
-  color: var(--text);
-  text-align: left;
+header h1 {
+    font-size: 2.8rem;
+    letter-spacing: 0.03em;
+    color: #111;
+    margin: 0;
 }
 
-.main-message,
-.conclusion-message {
-  margin-bottom: 0.9rem;
+header h2 {
+    font-weight: 300;
+    font-size: 1.3rem;
+    color: #666;
+    margin: 0;
+    margin-top: -0.5rem;
 }
 
-ul {
-  padding-left: 1.5rem;
-  margin-top: 0.75rem;
-  margin-bottom: 1rem;
+/* --- Main sections --- */
+main {
+    /*max-width: 1000px;*/
+    margin: 2rem auto 4rem auto;
+    padding: 0 1rem;
 }
 
-ul li {
-  margin-bottom: 0.45rem;
+.vis-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /*margin-bottom: 5rem;*/
 }
 
-.chart-container {
-  background: #111827;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+.text-block {
+    max-width: 1000px;
+    text-align: center;
 }
 
-.chart-title {
-  text-align: center;
-  font-weight: 600;
-  color: #f0f3ff;
-  margin-bottom: 0.8rem;
+.text-block h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: #222;
 }
 
-/* Small caption/description under chart titles */
-.chart-description {
-  max-width: var(--max-copy-width);
-  margin: 0 auto 0.8rem auto;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--muted);
-  text-align: center;
+.text-block p {
+    font-size: 1rem;
+    color: #555;
 }
 
+/* --- Visualization containers --- */
 .chart-space {
-  width: 100%;
-  height: 550px;
-  background: #0e1624;
-  border-radius: 10px;
-  overflow: hidden;
-
-  /* Center child SVG */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    width: 100%;
+    margin: 0 auto;        /* center container horizontally */
+    text-align: center;
 }
 
+.placeholder {
+    background-color: #fafafa;
+    border: 1px dashed #ccc;
+    padding: 3rem;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+
+svg {
+    display: block;
+    margin: 0 auto;        /* centers the SVG itself */
+}
+
+/* --- Geographical iframe embedding --- */
 #vis-global {
-  height: auto;
-  min-height: 620px;
-  padding: 0;
-  display: block;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+    position: relative;
 }
 
-#vis-global .geographical-embed {
-  min-height: 720px;
+.geographical-embed,
+.universe-embed {
+    width: 100%;
+    height: 99vh; /* take up 90% of viewport height */
+    min-height: 700px; /* fallback for smaller screens */
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
 }
 
-.geographical-embed {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 600px;
-  border: none;
-  background: #0e1624;
-  flex: 1 1 auto;
+
+/* DNA vis*/
+
+.dna-tooltip {
+    transition: opacity 0.15s ease;
+    backdrop-filter: blur(3px);
 }
 
-footer {
-  font-size: 0.9rem;
-  color: #9da5be;
-  border-top: 1px solid #1f2937;
-  margin-top: 2rem;
+
+/* --- Footer --- */
+
+/* === snap scrolling (final) === */
+html, body { height: 100%; margin: 0; }
+:root { scroll-behavior: smooth; }
+
+/* one true scroll container */
+.pageScroller {
+    height: 100vh;              /* viewport-sized scroller */
+    overflow-y: auto;           /* this element owns the scroll */
+    scroll-snap-type: y mandatory; /* firm snap; use 'proximity' for softer */
+    scroll-padding-top: 0;      /* adjust if you add a fixed header later */
 }
 
-*.unselectable {
-    -moz-user-select: none;
-    -khtml-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
- }
-
-.helix-tooltip {
-    backdrop-filter: blur(6px);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+/* snap targets (direct children of .pageScroller) */
+.pageScroller > .snap {
+    min-height: 100vh;          /* each fills the viewport */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    scroll-snap-align: center;  /* <-- centers the target in the viewport */
+    scroll-snap-stop: always;   /* don't skip past sections on fast flicks */
 }
 
+/* optional: subtle active effect (your JS can toggle .is-active) */
+.vis-section { opacity: 0.85; transition: opacity 200ms ease; }
+.vis-section.is-active { opacity: 1; }
+
+/* iframe sizing within a snap section (fits under 100vh) */
+/*.geographical-embed {*/
+/*    width: 100%;*/
+/*    height: 70vh;*/
+/*    min-height: 560px;*/
+/*    border: none;*/
+/*}*/
+
+/* keep your existing styles above as-is */
+
+/* Fixed Spotify widget at bottom-right */
+#spotify-player-container {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    gap: 8px;
+    pointer-events: auto;
+    padding: 6px;
+    background: transparent;
+    border-radius: 12px;
+}
+
+
+/* Hide button inside container */
+.spotify-hide-btn {
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+}
+
+/* Floating show button when hidden */
+#spotify-show-btn {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 9999;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #1db954;
+    color: #fff;
+    border: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    #spotify-player-container { right: 8px; bottom: 8px; }
+    .spotify-embed { width: 260px; height: 72px; }
+    #spotify-show-btn { right: 8px; bottom: 8px; }
+}
