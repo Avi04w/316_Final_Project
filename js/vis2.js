@@ -291,23 +291,25 @@
                 });
         }
 
-        function zoomIn(d, onDone) {
-            const clicked = g.selectAll("g.node").filter(n => n === d);
-            clicked.classed("node--blackout", true);
-
+        function zoomIn(d) {
             const from = group.attr("pointer-events", "none");
+
+            // hide every label in the old layer so none of them ride the transform
+            from.selectAll("text").style("display", "none");   // <- kill the fly
+
+            // build the new layer
             const to = (group = g.append("g").call(render, d));
             x.domain([d.x0, d.x1]);
             y.domain([d.y0, d.y1]);
 
-            updateBg(d); // flip to black immediately
+            // start with labels invisible in the new layer, then fade in after tween
+            to.selectAll("text").style("opacity", 0);
 
             g.transition().duration(800).ease(d3.easeCubicOut)
                 .call(t => from.transition(t).remove().call(position, d.parent))
                 .call(t => to.transition(t).call(position, d))
                 .on("end", () => {
-                    clicked.classed("node--blackout", false);
-                    if (onDone) onDone();
+                    to.selectAll("text").style("opacity", 1);      // <- gentle appear
                 });
         }
 
