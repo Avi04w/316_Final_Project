@@ -1,8 +1,9 @@
 const FEATURE_BOUNDS = {
-    acousticness: [0, 0.7],
+    acousticness: [0, 0.8],
     danceability: [0.20, 1],
     energy:       [0.2, 1],
-    liveness:     [0, 0.75],
+    speechiness:  [0, 0.5],
+    loudness:     [-30, 0],
     tempo:        [60, 190],
     valence:      [0, 1]
 };
@@ -18,22 +19,24 @@ const FEATURE_BOUNDS = {
 
             // --- identical color scales ---
             this.colorScales = {
+                energy:       d3.scaleSequential(d3.interpolateRgb("#eaac6d", "#af3000")),
+                tempo:        d3.scaleSequential(d3.interpolateRgb("#d9a7a7", "#940000")),
                 acousticness: d3.scaleSequential(d3.interpolateRgb("#d5e9ff", "#012b42")),
-                danceability: d3.scaleSequential(d3.interpolateRgb("#ffc7de", "#230465")),
-                energy:       d3.scaleSequential(d3.interpolateRgb("#fbc4af", "#651b00")),
-                liveness:     d3.scaleSequential(d3.interpolateRgb("#b3ffc3", "#003e1f")),
-                tempo:        d3.scaleSequential(d3.interpolateRgb("#ffabab", "#5e0000")), // blue(slow)->red(fast)
                 valence:      d3.scaleSequential(d3.interpolateRgb("#083957", "#ded700")),
+                danceability: d3.scaleSequential(d3.interpolateRgb("#ffc7de", "#230465")),
+                speechiness:  d3.scaleSequential(d3.interpolateRgb("#ffe9b6", "#6a4c00")),
+                loudness:     d3.scaleSequential(d3.interpolateRgb("#000000", "#a0a0a1"))
             };
 
             // short human-readable descriptions (used by the legend description)
             this.featureDescriptions = {
-                acousticness: "Higher values indicate a more acoustic (non-electronic) sound profile.",
-                danceability: "Measures how suitable a track is for dancing — rhythm, tempo, and beat consistency.",
-                energy: "Represents the intensity or activity of a track — higher values are louder and more dynamic.",
-                liveness: "Estimates live performance presence — high values suggest audience sounds or live settings.",
-                tempo: "The overall speed or pace of a track, measured in beats per minute (BPM).",
-                valence: "Measures the musical positivity — higher values sound happier or more euphoric."
+                danceability: "Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.",
+                energy: "Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale.",
+                loudness: "The overall loudness of a track in decibels (dB).",
+                speechiness: "Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording, the closer to 1.0 the attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words.",
+                acousticness: "A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic.",
+                valence: "A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry).",
+                tempo: "The overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration."
             };
 
             const container = d3.select(selector).html("");
@@ -369,6 +372,7 @@ const FEATURE_BOUNDS = {
                 .attr("font-size", "13px")
                 .attr("fill", "#444")
                 .text(this.featureDescriptions ? (this.featureDescriptions[this.feature] || "") : "");
+            this.wrapText(legendGroup.select(".feature-description"), this.width * 0.8);
 
             // populate gradient stops using the colorScale and data extent
             const grad = d3.select("#yearly-legend-gradient-horizontal");
@@ -467,6 +471,33 @@ const FEATURE_BOUNDS = {
                         .style("opacity", 1);
                 });
         }
+
+        wrapText(textSelection, width) {
+            textSelection.each(function() {
+                const text = d3.select(this);
+                const words = text.text().split(/\s+/).reverse();
+                let word, line = [], lineNumber = 0;
+                const lineHeight = 1.2;
+                const y = text.attr("y");
+                const x = text.attr("x");
+                let tspan = text.text(null).append("tspan").attr("x", x).attr("y", y);
+                while (word = words.pop()) {
+                    line.push(word);
+                    tspan.text(line.join(" "));
+                    if (tspan.node().getComputedTextLength() > width) {
+                        line.pop();
+                        tspan.text(line.join(" "));
+                        line = [word];
+                        tspan = text.append("tspan")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("dy", ++lineNumber * lineHeight + "em")
+                            .text(word);
+                    }
+                }
+            });
+        }
+
     }
 
     window.VisDNAYearly = VisDNAYearly;
