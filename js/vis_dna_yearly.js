@@ -101,7 +101,9 @@ const FEATURE_BOUNDS = {
 
             const filtered = this.rawData.filter(d => {
                 const songYear = new Date(d.date).getFullYear();
-                return songYear === year && d.name && d.artists;
+                const peakRank = d["peak-rank"] != null ? Number(d["peak-rank"]) : NaN;
+                return songYear === year && d.name && d.artists && peakRank === 1;
+
             });
 
             const aggregated = d3.rollups(
