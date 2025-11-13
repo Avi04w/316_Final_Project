@@ -48,14 +48,6 @@ class FeatureTimeline {
         vis.eventTooltip = d3.select("body")
             .append("div")
             .attr("class", "event-tooltip")
-            .style("position", "absolute")
-            .style("background", "rgba(0,0,0,0.8)")
-            .style("color", "#fff")
-            .style("padding", "6px 10px")
-            .style("border-radius", "4px")
-            .style("pointer-events", "none")
-            .style("opacity", 0)
-            .style("font-size", "14px");
 
         this.loadData();
     }
@@ -276,18 +268,16 @@ class FeatureTimeline {
                     .transition()
                     .duration(200)
                     .ease(d3.easeCubicOut)
-                    .attr("r", 12);
+                    .attr("r", 10);
 
                 this.eventTooltip
                     .style("opacity", 1)
                     .html(`<strong>${d.event}</strong> (${d.year})`)
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 20) + "px");
+
+                this.updateEventTooltipPos(event);
             })
             .on("mousemove", (event) => {
-                this.eventTooltip
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 20) + "px");
+                this.updateEventTooltipPos(event);
             })
             .on("mouseleave", (event) => {
                 d3.select(event.currentTarget)
@@ -324,6 +314,16 @@ class FeatureTimeline {
     setFeature(feature) {
         this.feature = feature;
         this.processData();
+    }
+
+    updateEventTooltipPos(event) {
+        const tooltipWidth = this.eventTooltip.node().offsetWidth;
+        const x = event.pageX - tooltipWidth / 2;
+        const y = event.pageY - 50;
+
+        this.eventTooltip
+            .style("left", `${x}px`)
+            .style("top", `${y}px`);
     }
 }
 
