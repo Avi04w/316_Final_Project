@@ -5,6 +5,18 @@ class FeatureTimeline {
         this.margin = { top: 40, right: 40, bottom: 50, left: 60 };
         this.width = window.innerWidth * 0.8;
         this.height = window.innerHeight * 0.6;
+        this.events = {
+            acousticness: [
+                { year: 1999, event: "Genre came out" },
+                { year: 2008, event: "XYZ happened" }
+            ],
+            danceablility: [],
+            energy: [],
+            loudness: [],
+            speechieness: [],
+            tempo: [],
+            valance: []
+        };
 
         this.initVis();
     }
@@ -32,6 +44,18 @@ class FeatureTimeline {
             .attr("fill", "none")
             .attr("stroke", "#007bff")
             .attr("stroke-width", 3);
+
+        vis.eventTooltip = d3.select("body")
+            .append("div")
+            .attr("class", "event-tooltip")
+            .style("position", "absolute")
+            .style("background", "rgba(0,0,0,0.8)")
+            .style("color", "#fff")
+            .style("padding", "6px 10px")
+            .style("border-radius", "4px")
+            .style("pointer-events", "none")
+            .style("opacity", 0)
+            .style("font-size", "14px");
 
         this.loadData();
     }
@@ -86,12 +110,6 @@ class FeatureTimeline {
         const lineGen = d3.line()
             .x(d => vis.xScale(d.year))
             .y(d => vis.yScale(d.value))
-            .curve(d3.curveMonotoneX);
-
-        const areaGen = d3.area()
-            .x(d => vis.xScale(d.year))
-            .y0(vis.height)
-            .y1(d => vis.yScale(d.value))
             .curve(d3.curveMonotoneX);
 
         const color = window.dnaVis?.colorScales?.[vis.feature]
@@ -168,7 +186,13 @@ class FeatureTimeline {
             .duration(1000)
             .style("opacity", 1)
 
-        // Draw area
+        // --- Draw area ---
+        const areaGen = d3.area()
+            .x(d => vis.xScale(d.year))
+            .y0(vis.height)
+            .y1(d => vis.yScale(d.value))
+            .curve(d3.curveMonotoneX);
+
         const areaPath = vis.chart.selectAll(".line-area").data([vis.timeline]);
         areaPath.enter()
             .append("path")
@@ -180,7 +204,7 @@ class FeatureTimeline {
             .attr("d", areaGen);
 
 
-        // dd squares for each year
+        // --- Squares on line for each year tick ---
         const squareSize = 6; // size of square
         const points = vis.chart.selectAll(".year-square")
             .data(vis.timeline, d => d.year);
@@ -201,7 +225,7 @@ class FeatureTimeline {
             .attr("y", d => vis.yScale(d.value) - squareSize / 2)
             .attr("fill", color(maxVal));
 
-        // gradient under the line
+        // --- Gradient under the line ---
         let defs = vis.svg.select("defs");
         if (defs.empty()) defs = vis.svg.append("defs");
         let gradient = defs.selectAll("#line-gradient").data([1]);
@@ -214,8 +238,6 @@ class FeatureTimeline {
             .attr("y2", "100%");
 
         gradient = gradientEnter.merge(gradient);
-
-        // bind stops data
         const stopsData = [
             { offset: "0%", color: color(maxVal), opacity: 0.4 },
             { offset: "100%", color: color(maxVal), opacity: 0 }
@@ -230,6 +252,61 @@ class FeatureTimeline {
             .attr("stop-opacity", d => d.opacity);
 
         stops.exit().remove();
+
+        // --- Filter events for the current feature ---
+        const featureEvents = this.events[this.feature] || [];
+        const markers = this.chart.selectAll(".event-marker")
+            .data(featureEvents, d => d.year);
+        const markersEnter = markers.enter()
+            .append("circle")
+            .attr("class", "event-marker")
+            .attr("r", 0) // start small for a pop-in effect
+            .attr("fill", "#ff4136")
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 2)
+            .attr("cx", d => this.xScale(d.year))
+            .attr("cy", d => {
+                const point = this.timeline.find(t => t.year === d.year);
+                return point ? this.yScale(point.value) : this.height;
+            })
+            .style("opacity", 0)
+            .style("cursor", "pointer")
+            .on("mouseover", (event, d) => {
+                this.eventTooltip
+                    .style("opacity", 1)
+                    .html(`<strong>${d.event}</strong> (${d.year})`)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 20) + "px");
+            })
+            .on("mousemove", (event) => {
+                this.eventTooltip
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 20) + "px");
+            })
+            .on("mouseleave", () => {
+                this.eventTooltip.style("opacity", 0);
+            });
+
+        markersEnter.transition()
+            .delay((_, i) => 1500 + i * 400) // staggers
+            .duration(800)
+            .ease(d3.easeElasticOut)
+            .attr("r", 8)
+            .style("opacity", 1);
+
+        markers.transition()
+            .duration(800)
+            .attr("cx", d => this.xScale(d.year))
+            .attr("cy", d => {
+                const point = this.timeline.find(t => t.year === d.year);
+                return point ? this.yScale(point.value) : this.height;
+            });
+
+        markers.exit()
+            .transition()
+            .duration(400)
+            .style("opacity", 0)
+            .remove();
     }
 
     setFeature(feature) {
