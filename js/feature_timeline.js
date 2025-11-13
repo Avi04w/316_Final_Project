@@ -69,7 +69,7 @@ class FeatureTimeline {
             const valid = songs.filter(s => s[vis.feature] != null && !isNaN(s[vis.feature]));
             const avg = d3.mean(valid, d => d[vis.feature]);
             return { year: +year, value: avg };
-        }).filter(d => d.value != null);
+        }).filter(d => d.value != null && d.year >= 1980);
 
         vis.timeline.sort((a, b) => a.year - b.year);
 
@@ -332,14 +332,22 @@ class FeatureTimeline {
 FEATURE_EVENTS = {
     acousticness: [
         {
-            year: 1973,
-            event: "Genre came out",
+            year: 1984,
+            event: "XXX Event",
             contents: [
-                "BLAHLD",
-                "ASFLHJ",
-                "ASFHJ"
+                "blahblahblah",
+                "flasd kjsadfkl ashldk",
             ],
-            image: "https://picsum.photos/200/300"
+            image: "https://picsum.photos/1000/500"
+        },
+        {
+            year: 2012,
+            event: "Software came out",
+            contents: [
+                "Digital software called xyz came out.",
+                "Was very popular, so blah blah blah",
+            ],
+            image: "https://picsum.photos/1000/500"
         },
     ],
     danceablility: [],
