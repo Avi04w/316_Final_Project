@@ -260,7 +260,7 @@ class FeatureTimeline {
         const markersEnter = markers.enter()
             .append("circle")
             .attr("class", "event-marker")
-            .attr("r", 0) // start small for a pop-in effect
+            .attr("r", 0)
             .attr("fill", "#ff4136")
             .attr("stroke", "#fff")
             .attr("stroke-width", 2)
@@ -272,6 +272,12 @@ class FeatureTimeline {
             .style("opacity", 0)
             .style("cursor", "pointer")
             .on("mouseover", (event, d) => {
+                d3.select(event.currentTarget)
+                    .transition()
+                    .duration(200)
+                    .ease(d3.easeCubicOut)
+                    .attr("r", 12);
+
                 this.eventTooltip
                     .style("opacity", 1)
                     .html(`<strong>${d.event}</strong> (${d.year})`)
@@ -283,7 +289,13 @@ class FeatureTimeline {
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 20) + "px");
             })
-            .on("mouseleave", () => {
+            .on("mouseleave", (event) => {
+                d3.select(event.currentTarget)
+                    .transition()
+                    .duration(200)
+                    .ease(d3.easeCubicOut)
+                    .attr("r", 8);
+
                 this.eventTooltip.style("opacity", 0);
             });
 
