@@ -3,8 +3,8 @@ class FeatureTimeline {
         this.parent = parent;
         this.feature = feature;
         this.margin = { top: 40, right: 40, bottom: 50, left: 60 };
-        this.width = 900;
-        this.height = 350;
+        this.width = window.innerWidth * 0.6;
+        this.height = window.innerHeight * 0.6;
 
         this.initVis();
     }
@@ -88,11 +88,19 @@ class FeatureTimeline {
             .y(d => vis.yScale(d.value))
             .curve(d3.curveMonotoneX);
 
+        const areaGen = d3.area()
+            .x(d => vis.xScale(d.year))
+            .y0(vis.height)
+            .y1(d => vis.yScale(d.value))
+            .curve(d3.curveMonotoneX);
+
         const color = window.dnaVis?.colorScales?.[vis.feature]
             || d3.scaleSequential(d3.interpolateBlues); // fallback just in case
 
         // apply max value to color scale domain
         const maxVal = d3.max(vis.timeline, d => d.value);
+        const minVal = 0;
+
         color.domain([0, maxVal]);
 
         vis.linePath
@@ -111,6 +119,103 @@ class FeatureTimeline {
             .transition()
             .duration(600)
             .call(d3.axisLeft(vis.yScale));
+
+        vis.svg.selectAll(".axis-label").remove();
+
+        // X axis label
+        this.svg.append("text")
+            .attr("class", "axis-label")
+            .attr("x", (this.width + this.margin.left + this.margin.right) / 2)
+            .attr("y", this.height + this.margin.bottom + this.margin.top)
+            .attr("text-anchor", "middle")
+            .attr("font-size", 16)
+            .attr("fill", "#333")
+            .text("Year");
+
+        // Y axis label
+        this.svg.append("text")
+            .attr("class", "axis-label")
+            .attr("x", -(this.height / 2))
+            .attr("y", this.margin.left - 50)
+            .attr("transform", "rotate(-90)")
+            .attr("text-anchor", "middle")
+            .attr("font-size", 16)
+            .attr("fill", "#333")
+            .text(this.feature);
+
+        // Draw area
+        const areaPath = vis.chart.selectAll(".line-area").data([vis.timeline]);
+        areaPath.enter()
+            .append("path")
+            .attr("class", "line-area")
+            .attr("fill", "url(#line-gradient)")
+            .merge(areaPath)
+            .transition()
+            .duration(800)
+            .attr("d", areaGen);
+
+
+        // --- Add squares for each year ---
+        const squareSize = 6; // size of square
+        const points = vis.chart.selectAll(".year-square")
+            .data(vis.timeline, d => d.year);
+
+        // Remove old points
+        points.exit().remove();
+
+        // Add new squares
+        points.enter()
+            .append("rect")
+            .attr("class", "year-square")
+            .attr("width", squareSize)
+            .attr("height", squareSize)
+            .attr("x", d => vis.xScale(d.year) - squareSize / 2)
+            .attr("y", d => vis.yScale(d.value) - squareSize / 2)
+            .attr("fill", color(maxVal))
+            .merge(points)
+            .transition()
+            .duration(800)
+            .attr("x", d => vis.xScale(d.year) - squareSize / 2)
+            .attr("y", d => vis.yScale(d.value) - squareSize / 2)
+            .attr("fill", color(maxVal));
+
+        // --- Gradient under the line ---
+let defs = vis.svg.select("defs");
+if (defs.empty()) defs = vis.svg.append("defs");
+
+let gradient = defs.selectAll("#line-gradient").data([1]);
+
+// Enter gradient if not present
+const gradientEnter = gradient.enter()
+    .append("linearGradient")
+    .attr("id", "line-gradient")
+    .attr("x1", "0%")
+    .attr("x2", "0%")
+    .attr("y1", "0%")
+    .attr("y2", "100%");
+
+// Merge enter + existing
+gradient = gradientEnter.merge(gradient);
+
+// Bind stops data
+const stopsData = [
+    { offset: "0%", color: color(maxVal), opacity: 0.4 },
+    { offset: "100%", color: color(maxVal), opacity: 0 }
+];
+
+let stops = gradient.selectAll("stop").data(stopsData);
+
+// Enter new stops
+stops.enter()
+    .append("stop")
+    .merge(stops) // update existing stops
+    .attr("offset", d => d.offset)
+    .attr("stop-color", d => d.color)
+    .attr("stop-opacity", d => d.opacity);
+
+// Remove any extra stops (if somehow more than 2 exist)
+stops.exit().remove();
+
     }
 
     setFeature(feature) {
