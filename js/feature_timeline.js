@@ -79,7 +79,7 @@ class FeatureTimeline {
             .range([0, vis.width]);
 
         vis.yScale
-            .domain([0, d3.max(vis.timeline, d => d.value)])
+            .domain([d3.min(vis.timeline, d => d.value), d3.max(vis.timeline, d => d.value)])
             .nice()
             .range([vis.height, 0]);
 
@@ -180,42 +180,37 @@ class FeatureTimeline {
             .attr("fill", color(maxVal));
 
         // --- Gradient under the line ---
-let defs = vis.svg.select("defs");
-if (defs.empty()) defs = vis.svg.append("defs");
+        let defs = vis.svg.select("defs");
+        if (defs.empty()) defs = vis.svg.append("defs");
+        let gradient = defs.selectAll("#line-gradient").data([1]);
+        const gradientEnter = gradient.enter()
+            .append("linearGradient")
+            .attr("id", "line-gradient")
+            .attr("x1", "0%")
+            .attr("x2", "0%")
+            .attr("y1", "0%")
+            .attr("y2", "100%");
 
-let gradient = defs.selectAll("#line-gradient").data([1]);
+        gradient = gradientEnter.merge(gradient);
 
-// Enter gradient if not present
-const gradientEnter = gradient.enter()
-    .append("linearGradient")
-    .attr("id", "line-gradient")
-    .attr("x1", "0%")
-    .attr("x2", "0%")
-    .attr("y1", "0%")
-    .attr("y2", "100%");
+        // Bind stops data
+        const stopsData = [
+            { offset: "0%", color: color(maxVal), opacity: 0.4 },
+            { offset: "100%", color: color(maxVal), opacity: 0 }
+        ];
 
-// Merge enter + existing
-gradient = gradientEnter.merge(gradient);
+        let stops = gradient.selectAll("stop").data(stopsData);
 
-// Bind stops data
-const stopsData = [
-    { offset: "0%", color: color(maxVal), opacity: 0.4 },
-    { offset: "100%", color: color(maxVal), opacity: 0 }
-];
+        // Enter new stops
+        stops.enter()
+            .append("stop")
+            .merge(stops) // update existing stops
+            .attr("offset", d => d.offset)
+            .attr("stop-color", d => d.color)
+            .attr("stop-opacity", d => d.opacity);
 
-let stops = gradient.selectAll("stop").data(stopsData);
-
-// Enter new stops
-stops.enter()
-    .append("stop")
-    .merge(stops) // update existing stops
-    .attr("offset", d => d.offset)
-    .attr("stop-color", d => d.color)
-    .attr("stop-opacity", d => d.opacity);
-
-// Remove any extra stops (if somehow more than 2 exist)
-stops.exit().remove();
-
+        // Remove any extra stops (if somehow more than 2 exist)
+        stops.exit().remove();
     }
 
     setFeature(feature) {
