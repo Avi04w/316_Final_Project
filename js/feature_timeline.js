@@ -3,7 +3,7 @@ class FeatureTimeline {
         this.parent = parent;
         this.feature = feature;
         this.margin = { top: 40, right: 40, bottom: 50, left: 60 };
-        this.width = window.innerWidth * 0.6;
+        this.width = window.innerWidth * 0.8;
         this.height = window.innerHeight * 0.6;
 
         this.initVis();
@@ -97,10 +97,7 @@ class FeatureTimeline {
         const color = window.dnaVis?.colorScales?.[vis.feature]
             || d3.scaleSequential(d3.interpolateBlues); // fallback just in case
 
-        // apply max value to color scale domain
         const maxVal = d3.max(vis.timeline, d => d.value);
-        const minVal = 0;
-
         color.domain([0, maxVal]);
 
         vis.linePath
@@ -113,16 +110,40 @@ class FeatureTimeline {
         vis.xAxis
             .transition()
             .duration(600)
-            .call(d3.axisBottom(vis.xScale).tickFormat(d3.format("d")));
+            .call(d3.axisBottom(vis.xScale).tickFormat(d3.format("d")).tickPadding(10))
+
+        vis.xAxis
+            .selectAll(".domain")
+            .transition()
+            .duration(600)
+            .style("opacity", 0);
+
+        vis.xAxis
+            .selectAll("line")
+            .style("opacity", 0);
 
         vis.yAxis
             .transition()
             .duration(600)
-            .call(d3.axisLeft(vis.yScale));
+            .call(d3.axisLeft(vis.yScale))
+            .transition()
+            .duration(600)
+            .call(d3.axisLeft(vis.yScale).tickSize(-vis.width).tickPadding(12))
+
+        vis.yAxis
+            .selectAll(".domain")
+            .transition()
+            .duration(600)
+            .style("opacity", 0);
+
+        vis.yAxis
+            .selectAll("line")
+            .attr("stroke", "#ccc")
+            .attr("stroke-dasharray", "3 3");
 
         vis.svg.selectAll(".axis-label").remove();
 
-        // X axis label
+        // x axis label
         this.svg.append("text")
             .attr("class", "axis-label")
             .attr("x", (this.width + this.margin.left + this.margin.right) / 2)
@@ -130,9 +151,9 @@ class FeatureTimeline {
             .attr("text-anchor", "middle")
             .attr("font-size", 16)
             .attr("fill", "#333")
-            .text("Year");
+            .text("Year")
 
-        // Y axis label
+        // y axis label
         this.svg.append("text")
             .attr("class", "axis-label")
             .attr("x", -(this.height / 2))
@@ -141,7 +162,11 @@ class FeatureTimeline {
             .attr("text-anchor", "middle")
             .attr("font-size", 16)
             .attr("fill", "#333")
-            .text(this.feature);
+            .style("opacity", 0)
+            .text(this.feature)
+            .transition()
+            .duration(1000)
+            .style("opacity", 1)
 
         // Draw area
         const areaPath = vis.chart.selectAll(".line-area").data([vis.timeline]);
@@ -155,15 +180,12 @@ class FeatureTimeline {
             .attr("d", areaGen);
 
 
-        // --- Add squares for each year ---
+        // dd squares for each year
         const squareSize = 6; // size of square
         const points = vis.chart.selectAll(".year-square")
             .data(vis.timeline, d => d.year);
 
-        // Remove old points
         points.exit().remove();
-
-        // Add new squares
         points.enter()
             .append("rect")
             .attr("class", "year-square")
@@ -179,7 +201,7 @@ class FeatureTimeline {
             .attr("y", d => vis.yScale(d.value) - squareSize / 2)
             .attr("fill", color(maxVal));
 
-        // --- Gradient under the line ---
+        // gradient under the line
         let defs = vis.svg.select("defs");
         if (defs.empty()) defs = vis.svg.append("defs");
         let gradient = defs.selectAll("#line-gradient").data([1]);
@@ -193,15 +215,13 @@ class FeatureTimeline {
 
         gradient = gradientEnter.merge(gradient);
 
-        // Bind stops data
+        // bind stops data
         const stopsData = [
             { offset: "0%", color: color(maxVal), opacity: 0.4 },
             { offset: "100%", color: color(maxVal), opacity: 0 }
         ];
 
         let stops = gradient.selectAll("stop").data(stopsData);
-
-        // Enter new stops
         stops.enter()
             .append("stop")
             .merge(stops) // update existing stops
@@ -209,7 +229,6 @@ class FeatureTimeline {
             .attr("stop-color", d => d.color)
             .attr("stop-opacity", d => d.opacity);
 
-        // Remove any extra stops (if somehow more than 2 exist)
         stops.exit().remove();
     }
 
