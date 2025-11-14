@@ -78,7 +78,7 @@ class FeatureTimeline {
 
     updateVis() {
         const vis = this;
-        console.log(vis.timeline)
+        console.log(`Average ${this.feature} per year: `, vis.timeline)
 
         vis.xScale
             .domain(d3.extent(vis.timeline, d => d.year))
@@ -187,7 +187,7 @@ class FeatureTimeline {
 
 
         // --- Squares on line for each year tick ---
-        const squareSize = 6; // size of square
+        const squareSize = 6;
         const points = vis.chart.selectAll(".year-square")
             .data(vis.timeline, d => d.year);
 
@@ -280,7 +280,7 @@ class FeatureTimeline {
             });
 
         markersEnter.transition()
-            .delay((_, i) => 1300 + i * 400) // staggers
+            .delay((_, i) => 1300 + i * 200) // staggers
             .duration(800)
             .ease(d3.easeElasticOut)
             .attr("r", 8)
@@ -393,7 +393,78 @@ FEATURE_EVENTS = {
             image: "https://cdn.mos.cms.futurecdn.net/v6wtvNm6y9mCVFKwcmMBQC-1920-80.jpg"
         },
     ],
-    danceablility: [],
+    danceability: [
+        {
+            year: 1983,
+            event: "MTV era boosts synth-pop and dance-oriented production",
+            contents: [
+                "Visual pop stars drove rhythmic, high-energy music.",
+                "Synth-pop and post-disco acts rose rapidly.",
+                "Danceability increased across Billboard hits."
+            ],
+            image: "https://wallpapers.com/images/hd/synthwave-sun-and-mountains-chcmtnilfpwcy3xh.jpg"
+        },
+        {
+            year: 1993,
+            event: "Hip-hop and R&B become dominant chart genres",
+            contents: [
+                "Groove-focused production replaced rock-centered styles.",
+                "R&B groups and rap artists shaped the Billboard sound.",
+                "Danceability surged through the mid-90s."
+            ],
+            image: "https://wallpapers.com/images/hd/rap-aesthetic-qmuqgblb28exk3kx.jpg"
+        },
+        {
+            year: 1997,
+            event: "Eurodance and house music influence U.S. mainstream pop",
+            contents: [
+                "Club rhythms and four-on-the-floor beats gained traction.",
+                "Global dance acts impacted U.S. production trends.",
+                "Danceability reached one of its decade highs."
+            ],
+            image: "https://c4.wallpaperflare.com/wallpaper/686/788/901/mixing-console-dj-controller-hd-wallpaper-preview.jpg"
+        },
+        {
+            year: 2002,
+            event: "Rock revival and ballads reduce dance-oriented production",
+            contents: [
+                "Alternative rock bands topped the charts.",
+                "Pop leaned toward slower emotional ballads.",
+                "Danceability dropped in the early 2000s."
+            ],
+            image: "https://t3.ftcdn.net/jpg/03/12/73/64/360_F_312736429_mlLxNx88hL9oEiKac874meeab2xE3ONf.jpg"
+        },
+        {
+            year: 2015,
+            event: "Streaming era ushers in a dance-pop renaissance",
+            contents: [
+                "Playlists elevated rhythmic, upbeat tracks.",
+                "Dance-pop ruled the Hot 100.",
+                "Producers emphasized grooves and bounce."
+            ],
+            image: "https://i.pinimg.com/736x/5f/f0/1f/5ff01fc2656b02e07f00d4e401061b02.jpg"
+        },
+        {
+            year: 2017,
+            event: "Reggaeton and afrobeats reshape U.S. pop",
+            contents: [
+                "Global rhythmic styles became mainstream.",
+                "Syncopated grooves defined hit songs.",
+                "Danceability rose sharply."
+            ],
+            image: "https://i8.amplience.net/i/naras/women-behind-the-scenes-African-Music.jpg"
+        },
+        {
+            year: 2019,
+            event: "TikTok era rewards highly danceable music",
+            contents: [
+                "Viral dances propelled songs up the charts.",
+                "Producers optimized for beat clarity and bounce.",
+                "Danceability reached modern-era highs."
+            ],
+            image: "https://wallpapers.com/images/featured/tiktok-8ylayzyh1shrzytz.jpg"
+        }
+    ],
     energy: [],
     loudness: [],
     speechieness: [],
