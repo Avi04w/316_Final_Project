@@ -527,7 +527,44 @@ FEATURE_EVENTS = {
             image: "https://opinionatedopinionsite.wordpress.com/wp-content/uploads/2022/01/image_editor_output_image1861738765-1641747875093-e1641747993432.jpg?w=600"
         }
     ],
-    loudness: [],
+    loudness: [
+        {
+            year: 1994,
+            event: "The Rise of the Loudness War",
+            contents: [
+                "During the mid-1990s, labels and engineers began aggressively maximizing volume to make songs stand out on radio.",
+                "This era marks the start of a sharp increase in average loudness as dynamic range was heavily reduced for perceived impact."
+            ],
+            image: "https://producelikeapro.com/blog/wp-content/uploads/2022/03/How-the-%E2%80%98Loudness-Wars-Made-Music-Sound-Worse-And-What-We-Should-Learn-from-It-1080x689.jpg"
+        },
+        {
+            year: 1999,
+            event: "Peak CD Mastering Compression",
+            contents: [
+                "By the late '90s, CD mastering techniques pushed loudness levels to new extremes, with heavy limiting and clipping becoming common.",
+                "This period is often cited as the height of the loudness war, where many albums prioritized sheer volume over clarity."
+            ],
+            image: "https://storage.googleapis.com/stateless-blog-g4m-co-uk/2024/03/Clipped-waveform.jpg"
+        },
+        {
+            year: 2007,
+            event: "Public Backlash After the 'Death Magnetic' Controversy",
+            contents: [
+                "Metallica's *Death Magnetic* sparked widespread criticism due to severe distortion caused by excessive compression.",
+                "The backlash brought mainstream attention to the issues caused by ultra-loud mastering and helped push the industry toward change."
+            ],
+            image: "https://cdn.mos.cms.futurecdn.net/9303cbd0419e5815d96538229fb17b21.jpg"
+        },
+        {
+            year: 2015,
+            event: "Streaming Platforms Normalize Loudness",
+            contents: [
+                "Services like Spotify, Apple Music, and YouTube began applying loudness normalization, reducing the advantage of overly hot masters.",
+                "Producers gradually shifted back toward more dynamic, less distorted mixes since louder tracks no longer sounded louder during playback."
+            ],
+            image: "https://viberate-upload.ams3.cdn.digitaloceanspaces.com/prod/com/article/top-5-streaming-platforms-for-talent-discovery-ranked-by-aandrs-music-industry-survey-YHPM9"
+        }
+    ],
     speechieness: [],
     tempo: [],
     valance: []
