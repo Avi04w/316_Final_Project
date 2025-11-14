@@ -14,7 +14,7 @@ const WORLD_URL = "./data/world-110m.json";
 const START_DATE = new Date("1980-01-01T00:00:00Z");
 const END_DATE = new Date("2020-12-31T23:59:59Z");
 const BASELINE_END = new Date("1989-12-31T23:59:59Z");
-const DEFAULT_WINDOW = 4;
+const DEFAULT_WINDOW = 52;
 const DEFAULT_TOP_N = 8;
 const DEFAULT_PLAYBACK_SPEED = 200;
 const ENABLE_FEATURE_HOTSPOTS = false;
@@ -130,6 +130,10 @@ let projection = null;
 let pathGenerator = null;
 let mapWidth = 960;
 let mapHeight = 540;
+let worldGeo = null;
+let borderGeo = null;
+let mapResizeObserver = null;
+let hasWindowResizeListener = false;
 
 const sparklineStates = new Map();
 const sparklineValueEls = new Map();
@@ -151,7 +155,6 @@ let mapContainerEl = null;
 const statElements = {
   globalAverage: null,
   usAverage: null,
-  deltaFromUS: null,
   activeCountries: null,
   topExporter: null,
   fastestMover: null,
@@ -202,7 +205,7 @@ const state = {
   mapMode: "absolute",
   aggregationWindow: DEFAULT_WINDOW,
   highlightCount: DEFAULT_TOP_N,
-  normalizeTracks: true,
+  normalizeTracks: false,
   currentWeekIndex: 0,
   isPlaying: false,
   playSpeedMs: DEFAULT_PLAYBACK_SPEED,
@@ -277,14 +280,11 @@ function cacheDomReferences() {
     "[data-stat=globalAverage]"
   );
   statElements.usAverage = document.querySelector("[data-stat=usAverage]");
-  statElements.deltaFromUS = document.querySelector("[data-stat=deltaFromUS]");
   statElements.activeCountries = document.querySelector(
     "[data-stat=activeCountries]"
   );
   statElements.topExporter = document.querySelector("[data-stat=topExporter]");
-  statElements.fastestMover = document.querySelector(
-    "[data-stat=fastestMover]"
-  );
+  statElements.fastestMover = document.querySelector("[data-stat=fastestMover]");
 
   sparklineDefs.forEach((def) => {
     const el = document.querySelector(`[data-sparkline-value=${def.key}]`);
@@ -300,15 +300,18 @@ function attachControlHandlers() {
   }
   if (dom.mapModeSelect) {
     dom.mapModeSelect.value = state.mapMode;
+    dom.mapModeSelect.disabled = true;
   }
   if (dom.aggregationSelect) {
     dom.aggregationSelect.value = String(state.aggregationWindow);
+    dom.aggregationSelect.disabled = true;
   }
   if (dom.highlightInput) {
     dom.highlightInput.value = String(state.highlightCount);
   }
   if (dom.normalizeCheckbox) {
     dom.normalizeCheckbox.checked = state.normalizeTracks;
+    dom.normalizeCheckbox.disabled = true;
   }
 
   if (dom.featureSelect) {
@@ -317,7 +320,7 @@ function attachControlHandlers() {
     });
   }
 
-  if (dom.mapModeSelect) {
+  if (dom.mapModeSelect && !dom.mapModeSelect.disabled) {
     dom.mapModeSelect.addEventListener("change", (event) => {
       state.mapMode = event.target.value || "absolute";
       updateMapSummary();
@@ -325,7 +328,7 @@ function attachControlHandlers() {
     });
   }
 
-  if (dom.aggregationSelect) {
+  if (dom.aggregationSelect && !dom.aggregationSelect.disabled) {
     dom.aggregationSelect.addEventListener("change", (event) => {
       const value = Number(event.target.value) || DEFAULT_WINDOW;
       state.aggregationWindow = clampNumber(value, 1, 52);
@@ -341,7 +344,7 @@ function attachControlHandlers() {
     });
   }
 
-  if (dom.normalizeCheckbox) {
+  if (dom.normalizeCheckbox && !dom.normalizeCheckbox.disabled) {
     dom.normalizeCheckbox.addEventListener("change", (event) => {
       state.normalizeTracks = event.target.checked;
       renderForWeek(state.currentWeekIndex);
@@ -569,15 +572,22 @@ function computeBaselines() {
 
 function initializeMap(worldTopo) {
   if (!d3) return;
-  const world = feature(worldTopo, worldTopo.objects.countries);
+  stripAntarctica(worldTopo);
+  worldGeo = feature(worldTopo, worldTopo.objects.countries);
   mapSvgSelection = d3.select("#map");
-  mapWidth = Number(mapSvgSelection.attr("width")) || 960;
-  mapHeight = Number(mapSvgSelection.attr("height")) || 540;
-  projection = d3.geoNaturalEarth1().fitSize([mapWidth, mapHeight], world);
+  const { width, height } = getMapDimensions();
+  mapWidth = width;
+  mapHeight = height;
+  mapSvgSelection
+    .attr("width", mapWidth)
+    .attr("height", mapHeight)
+    .attr("viewBox", `0 0 ${mapWidth} ${mapHeight}`)
+    .attr("preserveAspectRatio", "xMidYMid meet");
+  projection = d3.geoNaturalEarth1().fitSize([mapWidth, mapHeight], worldGeo);
   pathGenerator = d3.geoPath(projection);
 
   normalizedNameIndex.clear();
-  world.features.forEach((feat) => {
+  worldGeo.features.forEach((feat) => {
     const normalized = normalizeName(feat.properties.name);
     normalizedNameIndex.set(normalized, feat);
     featureIdToName.set(feat.id, feat.properties.name);
@@ -586,7 +596,7 @@ function initializeMap(worldTopo) {
   choroplethSelection = mapSvgSelection
     .append("g")
     .selectAll("path")
-    .data(world.features)
+    .data(worldGeo.features)
     .join("path")
     .attr("d", pathGenerator)
     .attr("fill", "#f0f2f9")
@@ -595,18 +605,63 @@ function initializeMap(worldTopo) {
     .on("pointermove", (event, d) => handleMapPointer(event, d))
     .on("pointerleave", () => hideMapTooltip());
 
-  const borders = mesh(
-    worldTopo,
-    worldTopo.objects.countries,
-    (a, b) => a !== b
-  );
+  borderGeo = mesh(worldTopo, worldTopo.objects.countries, (a, b) => a !== b);
   borderSelection = mapSvgSelection
     .append("path")
     .attr("class", "map-borders")
-    .attr("d", pathGenerator(borders))
+    .attr("d", pathGenerator(borderGeo))
     .attr("fill", "none")
     .attr("stroke", "rgba(255,255,255,0.6)")
     .attr("stroke-width", 0.6);
+
+  if (typeof ResizeObserver !== "undefined" && mapContainerEl) {
+    if (mapResizeObserver) {
+      mapResizeObserver.disconnect();
+    }
+    mapResizeObserver = new ResizeObserver(() => handleMapResize());
+    mapResizeObserver.observe(mapContainerEl);
+  } else if (!hasWindowResizeListener) {
+    window.addEventListener("resize", handleMapResize);
+    hasWindowResizeListener = true;
+  }
+}
+
+function stripAntarctica(worldTopo) {
+  const geometries = worldTopo?.objects?.countries?.geometries;
+  if (!Array.isArray(geometries)) return;
+  worldTopo.objects.countries.geometries = geometries.filter(
+    (geom) => geom.properties?.name !== "Antarctica"
+  );
+}
+
+function getMapDimensions() {
+  if (!mapContainerEl) {
+    return { width: 960, height: 540 };
+  }
+  const rect = mapContainerEl.getBoundingClientRect();
+  const width = Math.max(320, rect.width || 0);
+  const height = Math.max(240, rect.height || rect.width * 0.55 || 0);
+  return { width, height };
+}
+
+function handleMapResize() {
+  if (!mapSvgSelection || !worldGeo) return;
+  const { width, height } = getMapDimensions();
+  if (width === mapWidth && height === mapHeight) return;
+  mapWidth = width;
+  mapHeight = height;
+  mapSvgSelection
+    .attr("width", mapWidth)
+    .attr("height", mapHeight)
+    .attr("viewBox", `0 0 ${mapWidth} ${mapHeight}`);
+  projection = d3.geoNaturalEarth1().fitSize([mapWidth, mapHeight], worldGeo);
+  pathGenerator = d3.geoPath(projection);
+  if (choroplethSelection) {
+    choroplethSelection.attr("d", pathGenerator);
+  }
+  if (borderSelection && borderGeo) {
+    borderSelection.attr("d", pathGenerator(borderGeo));
+  }
 }
 
 function configureTimeline() {
@@ -996,14 +1051,13 @@ function updateLegend(config) {
   mapLegendEl.appendChild(swatchContainer);
   mapLegendEl.appendChild(maxLabel);
 
-  divergenceLegendEl.textContent =
+  const additionalText =
     state.mapMode === "absolute"
-      ? state.normalizeTracks
-        ? "Each origin weighted equally"
-        : "Weighted by chart rank"
+      ? ""
       : state.mapMode === "divergence"
       ? "Cooler colors = lower vs US · Warmer = higher"
       : "Cooler colors = below 1980s · Warmer = above";
+  divergenceLegendEl.textContent = additionalText;
 }
 
 function updateStatPanel(aggregation) {
@@ -1022,14 +1076,6 @@ function updateStatPanel(aggregation) {
   }
   if (statElements.usAverage) {
     statElements.usAverage.textContent = formatter(aggregation.usAvg);
-  }
-  if (statElements.deltaFromUS) {
-    const delta =
-      Number.isFinite(aggregation.usAvg) &&
-      Number.isFinite(aggregation.globalAvg)
-        ? aggregation.usAvg - aggregation.globalAvg
-        : null;
-    statElements.deltaFromUS.textContent = formatDelta(delta);
   }
   if (statElements.activeCountries) {
     statElements.activeCountries.textContent = String(
@@ -1056,20 +1102,7 @@ function updateStatPanel(aggregation) {
   }
 
   if (statElements.fastestMover) {
-    const baselineMap =
-      baselinesByFeature.get(aggregation.featureKey) ?? new Map();
-    let candidate = null;
-    entries.forEach(([iso, info]) => {
-      const baseline = baselineMap.get(iso);
-      if (!Number.isFinite(baseline)) return;
-      const change = info.value - baseline;
-      if (!candidate || Math.abs(change) > Math.abs(candidate.change)) {
-        candidate = { iso, change };
-      }
-    });
-    statElements.fastestMover.textContent = candidate
-      ? `${formatCountryName(candidate.iso)} · ${formatDelta(candidate.change)}`
-      : "—";
+    statElements.fastestMover.textContent = "—";
   }
 }
 
