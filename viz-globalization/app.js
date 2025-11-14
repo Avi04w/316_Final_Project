@@ -2,6 +2,7 @@ import {
   feature,
   mesh,
 } from "https://cdn.jsdelivr.net/npm/topojson-client@3/+esm";
+import { DEFAULT_FEATURE_KEY, FEATURE_COLOR_MAP } from "./config.js";
 
 const d3 = window.d3;
 
@@ -20,18 +21,21 @@ const FEATURE_OPTIONS = [
     label: "Acousticness",
     domain: [0, 1],
     formatter: (value) => formatNumber(value, 2),
+    color: FEATURE_COLOR_MAP.acousticness,
   },
   {
     key: "danceability",
     label: "Danceability",
     domain: [0, 1],
     formatter: (value) => formatNumber(value, 2),
+    color: FEATURE_COLOR_MAP.danceability,
   },
   {
     key: "energy",
     label: "Energy",
     domain: [0, 1],
     formatter: (value) => formatNumber(value, 2),
+    color: FEATURE_COLOR_MAP.energy,
   },
   {
     key: "loudness",
@@ -39,30 +43,35 @@ const FEATURE_OPTIONS = [
     domain: [-25, 5],
     formatter: (value) =>
       Number.isFinite(value) ? `${formatNumber(value, 1)} dB` : "—",
+    color: FEATURE_COLOR_MAP.loudness,
   },
   {
     key: "valence",
     label: "Valence",
     domain: [0, 1],
     formatter: (value) => formatNumber(value, 2),
+    color: FEATURE_COLOR_MAP.valence,
   },
   {
     key: "instrumentalness",
     label: "Instrumentalness",
     domain: [0, 1],
     formatter: (value) => formatNumber(value, 3),
+    color: FEATURE_COLOR_MAP.instrumentalness,
   },
   {
     key: "speechiness",
     label: "Speechiness",
     domain: [0, 1],
     formatter: (value) => formatNumber(value, 2),
+    color: FEATURE_COLOR_MAP.speechiness,
   },
   {
     key: "liveness",
     label: "Liveness",
     domain: [0, 1],
     formatter: (value) => formatNumber(value, 2),
+    color: FEATURE_COLOR_MAP.liveness,
   },
   {
     key: "tempo",
@@ -70,6 +79,7 @@ const FEATURE_OPTIONS = [
     domain: [60, 180],
     formatter: (value) =>
       Number.isFinite(value) ? `${Math.round(value)} BPM` : "—",
+    color: FEATURE_COLOR_MAP.tempo,
   },
 ];
 
@@ -183,7 +193,7 @@ const featureIdToIso = new Map();
 const featureIdToName = new Map();
 
 const state = {
-  selectedFeatureKey: FEATURE_OPTIONS[0].key,
+  selectedFeatureKey: DEFAULT_FEATURE_KEY,
   mapMode: "absolute",
   aggregationWindow: DEFAULT_WINDOW,
   highlightCount: DEFAULT_TOP_N,
@@ -1101,8 +1111,17 @@ function initializeSparklines() {
     const card = document.querySelector(`[data-sparkline=${def.key}]`);
     if (!card) return;
     const svg = d3.select(card).select("svg");
-    const width = Number(svg.attr("width")) || 320;
-    const height = Number(svg.attr("height")) || 52;
+    const chartEl = card.querySelector(".sparkline-chart");
+    const chartRect = chartEl?.getBoundingClientRect();
+    const width =
+      chartRect && chartRect.width && Number.isFinite(chartRect.width)
+        ? chartRect.width
+        : Number(svg.attr("width")) || 320;
+    const height =
+      chartRect && chartRect.height && Number.isFinite(chartRect.height)
+        ? chartRect.height
+        : Number(svg.attr("height")) || 64;
+    svg.attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`);
     const margin = { top: 4, right: 8, bottom: 4, left: 8 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
@@ -1182,12 +1201,45 @@ function updateSparklinesForFeature() {
 
 function getSparklineDomain(seriesKey) {
   const option = FEATURE_LOOKUP.get(state.selectedFeatureKey);
-  if (!option) return [0, 1];
-  if (seriesKey === "spread") {
-    const [min, max] = option.domain;
-    return [0, Math.max(0.01, (max - min) * 0.6)];
+  const perFeature = featureSparklineSeries.get(state.selectedFeatureKey);
+  if (!option || !perFeature) {
+    return [0, 1];
   }
-  return option.domain.slice();
+
+  const series = perFeature[seriesKey] ?? [];
+  const values = series
+    .map((point) => point.value)
+    .filter((value) => Number.isFinite(value));
+
+  if (!values.length) {
+    if (seriesKey === "spread") {
+      return [0, Math.max(0.01, (option.domain[1] - option.domain[0]) * 0.6)];
+    }
+    return option.domain.slice();
+  }
+
+  let minValue = Math.min(...values);
+  let maxValue = Math.max(...values);
+
+  if (seriesKey === "spread") {
+    if (maxValue <= 0) {
+      maxValue = (option.domain[1] - option.domain[0]) * 0.25 || 0.25;
+    }
+    return [0, maxValue * 1.1];
+  }
+
+  if (minValue === maxValue) {
+    const span = option.domain[1] - option.domain[0] || 1;
+    const padding = span * 0.05;
+    minValue -= padding;
+    maxValue += padding;
+  } else {
+    const padding = (maxValue - minValue) * 0.1;
+    minValue -= padding;
+    maxValue += padding;
+  }
+
+  return [minValue, maxValue];
 }
 
 function updateSparklineCursors(weekIdx) {
