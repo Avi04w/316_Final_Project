@@ -99,7 +99,9 @@ class FeatureTimeline {
 
         const maxVal = d3.max(vis.timeline, d => d.value);
         color.domain([0, maxVal]);
-
+        const [yMin, yMax] = vis.yScale.domain();
+        const midFeatureVal = (yMin + yMax) / 2
+        console.log(midFeatureVal)
         vis.linePath
             .datum(vis.timeline)
             .transition()
@@ -264,10 +266,10 @@ class FeatureTimeline {
                     .style("opacity", 1)
                     .html(this.eventTooltipHTML(d));
 
-                this.updateEventTooltipPos(event);
+                this.updateEventTooltipPos(event, d, midFeatureVal);
             })
-            .on("mousemove", (event) => {
-                this.updateEventTooltipPos(event);
+            .on("mousemove", (event, d) => {
+                this.updateEventTooltipPos(event, d, midFeatureVal);
             })
             .on("mouseleave", (event) => {
                 d3.select(event.currentTarget)
@@ -306,11 +308,24 @@ class FeatureTimeline {
         this.processData();
     }
 
-    updateEventTooltipPos(event) {
+    updateEventTooltipPos(event, d, midFeatureVal) {
+        let x, y;
+        const featureValue = this.timeline.find(data => data.year === d.year).value
         const tooltipWidth = this.eventTooltip.node().offsetWidth;
         const tooltipHeight = this.eventTooltip.node().offsetHeight;
-        const x = event.pageX - tooltipWidth / 2;
-        const y = event.pageY - tooltipHeight - 20;
+
+        if (featureValue <= midFeatureVal) {
+            x = event.pageX - tooltipWidth / 2;
+            y = event.pageY - tooltipHeight - 20;
+        } else {
+            y = event.pageY - tooltipHeight / 2;
+
+            if (d.year <= 1985) {
+                x = event.pageX + 30;
+            } else {
+                x = event.pageX - tooltipWidth - 30;
+            }
+        }
 
         this.eventTooltip
             .style("left", `${x}px`)
