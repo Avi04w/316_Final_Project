@@ -21,6 +21,17 @@ export class ColorManager {
         this.billboardMode = false;
         this.selectedYear = null;
         this.currentWeek = null;
+        
+        // Feature-specific color scales matching DNA visualization
+        this.featureColorScales = {
+            energy: { start: [0.737, 1.0, 0.769], end: [0.114, 0.306, 0.0] },       // #bcffc4 to #1d4e00
+            tempo: { start: [1.0, 0.784, 0.784], end: [0.467, 0.0, 0.0] },          // #ffc8c8 to #770000
+            acousticness: { start: [0.835, 0.914, 1.0], end: [0.004, 0.169, 0.259] }, // #d5e9ff to #012b42
+            valence: { start: [0.0, 0.322, 0.514], end: [0.871, 0.843, 0.0] },      // #005283 to #ded700
+            danceability: { start: [1.0, 0.780, 0.871], end: [0.137, 0.016, 0.396] }, // #ffc7de to #230465
+            speechiness: { start: [1.0, 0.914, 0.714], end: [0.416, 0.298, 0.0] },  // #ffe9b6 to #6a4c00
+            loudness: { start: [0.729, 1.0, 0.961], end: [0.0, 0.486, 0.400] }      // #bafff5 to #007c66
+        };
     }
     
     /**
@@ -103,7 +114,7 @@ export class ColorManager {
                 const matches = this.trackMatchesGenre(trackData[i]);
                 
                 if (matches) {
-                    const color = this.getColorFromScale(value);
+                    const color = this.getColorFromScale(value, feature);
                     newColors[i * 3] = color[0];
                     newColors[i * 3 + 1] = color[1];
                     newColors[i * 3 + 2] = color[2];
@@ -185,10 +196,24 @@ export class ColorManager {
     }
     
     /**
-     * Get color from Viridis scale
+     * Get color from scale (Viridis for Billboard, feature-specific for audio features)
      */
-    getColorFromScale(value) {
-        return interpolateViridis(value, VIRIDIS_COLORS);
+    getColorFromScale(value, feature = null) {
+        // Use Viridis for Billboard mode
+        if (this.billboardMode || !feature || !this.featureColorScales[feature]) {
+            return interpolateViridis(value, VIRIDIS_COLORS);
+        }
+        
+        // Use feature-specific color scale
+        const scale = this.featureColorScales[feature];
+        const start = scale.start;
+        const end = scale.end;
+        
+        return [
+            start[0] + (end[0] - start[0]) * value,
+            start[1] + (end[1] - start[1]) * value,
+            start[2] + (end[2] - start[2]) * value
+        ];
     }
     
     /**
@@ -202,14 +227,14 @@ export class ColorManager {
     }
     
     /**
-     * Check if track matches selected genre
+     * Check if track matches selected supergenre
      */
     trackMatchesGenre(track) {
         if (!this.selectedGenre) return true;
-        if (!track.genres) return false;
         
-        const genres = Array.isArray(track.genres) ? track.genres : [track.genres];
-        return genres.some(genre => genre && genre.trim() === this.selectedGenre);
+        // Get the track's supergenre using DataManager
+        const trackSupergenre = this.dataManager.getSuperGenre(track);
+        return trackSupergenre === this.selectedGenre;
     }
     
     /**
@@ -264,7 +289,17 @@ export class ColorManager {
                 .attr('transform', `translate(${20 + shadowPadding}, ${legendMargin.top + shadowPadding})`);
             
             const defs = svg.append('defs');
-            const gradient = defs.append('linearGradient')
+            
+            // Create gradient for feature-specific colors
+            const featureGradient = defs.append('linearGradient')
+                .attr('id', 'feature-gradient')
+                .attr('x1', '0%')
+                .attr('y1', '100%')
+                .attr('x2', '0%')
+                .attr('y2', '0%');
+            
+            // Create gradient for Viridis (Billboard)
+            const viridisGradient = defs.append('linearGradient')
                 .attr('id', 'viridis-gradient')
                 .attr('x1', '0%')
                 .attr('y1', '100%')
@@ -272,15 +307,16 @@ export class ColorManager {
                 .attr('y2', '0%');
             
             VIRIDIS_COLORS.forEach((color, i) => {
-                gradient.append('stop')
+                viridisGradient.append('stop')
                     .attr('offset', `${(i / (VIRIDIS_COLORS.length - 1)) * 100}%`)
                     .attr('stop-color', `rgb(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255})`);
             });
             
             g.append('rect')
+                .attr('class', 'legend-rect')
                 .attr('width', legendWidth)
                 .attr('height', legendHeight)
-                .style('fill', 'url(#viridis-gradient)')
+                .style('fill', 'url(#feature-gradient)')
                 .style('stroke', '#ccc')
                 .style('stroke-width', 1);
             
@@ -299,6 +335,28 @@ export class ColorManager {
             g = svg.select('g');
             axisGroup = g.select('.legend-axis');
             titleText = g.select('.legend-title');
+        }
+        
+        // Update gradient for the current feature
+        const featureGradient = svg.select('#feature-gradient');
+        featureGradient.selectAll('stop').remove();
+        
+        if (this.featureColorScales[feature]) {
+            const scale = this.featureColorScales[feature];
+            const stops = 10;
+            for (let i = 0; i <= stops; i++) {
+                const t = i / stops;
+                const color = this.getColorFromScale(t, feature);
+                featureGradient.append('stop')
+                    .attr('offset', `${t * 100}%`)
+                    .attr('stop-color', `rgb(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255})`);
+            }
+        }
+        
+        // Update the legend rect to use the feature gradient
+        const legendRect = g.select('.legend-rect');
+        if (!legendRect.empty()) {
+            legendRect.style('fill', 'url(#feature-gradient)');
         }
         
         const scale = d3.scaleLinear()
@@ -391,6 +449,12 @@ export class ColorManager {
             g = svg.select('g');
             axisGroup = g.select('.legend-axis');
             titleText = g.select('.legend-title');
+        }
+        
+        // Switch to Viridis gradient for Billboard
+        const legendRect = g.select('.legend-rect');
+        if (!legendRect.empty()) {
+            legendRect.style('fill', 'url(#viridis-gradient)');
         }
         
         const scale = d3.scaleLinear()

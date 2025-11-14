@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/record_player.css">
     <link rel="stylesheet" href="css/treemap.css">
     <link rel="stylesheet" href="css/eras.css">
+    <link rel="stylesheet" href="css/feature_timeline.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 
 </head>
@@ -99,10 +100,9 @@
                     <option value="tempo">Tempo</option>
                     <option value="valence">Valence</option>
                 </select>
-
-                <div id="feature-description" >
-                    <!-- Detailed feature description populated by script -->
-                </div>
+            </div>
+            <div id="feature-description" >
+                <!-- Detailed feature description populated by script -->
             </div>
         </div>
     </section>
@@ -144,6 +144,25 @@
             <h2 class="chart-title">How Genres Defined Each Year’s Music Scene</h2>
             <p class="chart-description">A treemap showing how dominant music genres shaped the charts each year.</p>
             <div id="treemap" class="chart-space"></div>
+        </div>
+    </section>
+
+    <section class="vis-section snap" id="feature-timeline-section">
+        <div class="chart-container">
+            <h2 class="chart-title">
+                A Final Look at
+                <select id="feature-title-select" class="feature-title-dropdown">
+                    <option value="acousticness">Acousticness</option>
+                    <option value="danceability">Danceability</option>
+                    <option value="energy">Energy</option>
+                    <option value="loudness">Loudness</option>
+                    <option value="speechiness">Speechiness</option>
+                    <option value="tempo">Tempo</option>
+                    <option value="valence">Valence</option>
+                </select>
+            </h2>
+            <p class="chart-description"></p>
+            <div id="feature-timeline-vis" class="chart-space"></div>
         </div>
     </section>
 
@@ -222,28 +241,8 @@
         if (select) {
             // Set default selection to match the default feature variable
             select.value = feature;
-            select.addEventListener('change', function(e) {
-                feature = e.target.value; // update global var used by VisDNA
-                updateFeatureDescription(feature);
-
-                // If the DNA visualization is already instantiated, notify it of the change
-                // Use window.dnaVis which we expose when creating the instance below.
-                if (window.dnaVis) {
-                    try {
-                        window.dnaVis.feature = feature;
-                        // keep visDNA's own dropdown in sync if it exists
-                        var visSelect = document.getElementById('visdna-feature-select');
-                        if (visSelect) visSelect.value = feature;
-
-                        // update internal color scale domains and legend/description
-                        window.dnaVis.setColorScales && window.dnaVis.setColorScales();
-                        window.dnaVis.updateLegend && window.dnaVis.updateLegend();
-                        window.dnaVis.updateDescription && window.dnaVis.updateDescription();
-                    } catch (err) {
-                        // fail silently — shouldn't block UI
-                        console.warn('Failed to update dnaVis feature:', err);
-                    }
-                }
+            select.addEventListener("change", (e) => {
+                setGlobalFeature(e.target.value);
             });
         }
         // populate initial description
@@ -253,11 +252,82 @@
     // Initialize the DNA visualization using the (now-defined) feature variable.
     // The VisDNA instance is created after this script block below in the original file — keep that timing.
 </script>
+
+<!-- JS Scripts -->
+<script src="js/spotify_player.js"></script>
+<script src="js/vinyl_record.js"></script>
+<script src="js/vis_bubble.js"></script>
+<script src="js/vis_dna_yearly.js"></script>
+<script src="js/vis_dna.js"></script>
+<script src="js/scroll_snap.js"></script>
+<script src="js/treemap.js"></script>
+<script src="js/feature_timeline.js"></script>
 <script>
     // expose the instance on window so other scripts (like the top-level feature selector) can call methods on it
     window.dnaVis = new VisDNA("#vis-dna", { height: 360, feature: feature});
     // start is optional; VisDNA will begin animating after data loads. Keep optional start call for compatibility.
     window.dnaVis.start?.();
+</script>
+<script>
+    function setGlobalFeature(f) {
+        // 1. update global variable
+        window.feature = f;
+
+        // 2. sync all dropdowns
+        const top = document.getElementById("feature-select");
+        const title = document.getElementById("feature-title-select");
+        const dna = document.getElementById("visdna-feature-select");
+
+        if (top) top.value = f;
+        if (title) title.value = f;
+        if (dna) dna.value = f;
+
+        // 3. update feature descriptions in main text
+        if (typeof updateFeatureDescription === "function") {
+            updateFeatureDescription(f);
+        }
+
+        // 4. update the timeline
+        if (window.featureTimeline) {
+            window.featureTimeline.setFeature(f);
+        }
+
+        // 5. update the DNA helix
+        if (window.dnaVis) {
+            window.dnaVis.feature = f;
+            window.dnaVis.setColorScales();
+            window.dnaVis.updateLegend();
+            window.dnaVis.updateDescription();
+        }
+
+        // 6. update the title label text
+        const titleEl = document.querySelector("#feature-timeline-section .chart-title");
+        if (titleEl) {
+            titleEl.childNodes[0].textContent = "A Final Look at ";
+        }
+
+        // 7. update the universe visualization
+        const universeIframe = document.querySelector('.universe-embed');
+        if (universeIframe && universeIframe.contentWindow) {
+            universeIframe.contentWindow.postMessage({
+                type: 'set-feature',
+                feature: f
+            }, '*');
+        }
+    }
+
+    // Listen for requests from the iframe
+    window.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'get-initial-feature') {
+            const universeIframe = document.querySelector('.universe-embed');
+            if (universeIframe && universeIframe.contentWindow) {
+                universeIframe.contentWindow.postMessage({
+                    type: 'set-feature',
+                    feature: window.feature // Send the current global feature
+                }, '*');
+            }
+        }
+    });
 </script>
 </body>
 </html>
