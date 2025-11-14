@@ -465,7 +465,68 @@ FEATURE_EVENTS = {
             image: "https://wallpapers.com/images/featured/tiktok-8ylayzyh1shrzytz.jpg"
         }
     ],
-    energy: [],
+    energy: [
+        {
+            year: 1983,
+            event: "Synth-driven pop and rock boost overall intensity",
+            contents: [
+                "Artists like Michael Jackson, Prince, and Eurythmics pushed highly energetic, electronic production.",
+                "Gated drums, bright synths, and aggressive mixing increased sonic intensity across Billboard hits.",
+                "This period marks one of the clearest energy jumps in the dataset."
+            ],
+            image: "https://res.cloudinary.com/jerrick/image/upload/d_642250b563292b35f27461a7.png,f_jpg,fl_progressive,q_auto,w_1024/qi4ixoilw0wxexg2rdjb.jpg"
+        },
+        {
+            year: 1993,
+            event: "Rise of R&B and laid-back hip-hop lowers average energy",
+            contents: [
+                "Smooth R&B acts (TLC, Boyz II Men, Janet Jackson) dominated charts with softer production.",
+                "West Coast hip-hop emphasized relaxed grooves rather than high-energy instrumentation.",
+                "Billboard shifts away from 80s bombast into more chill production styles."
+            ],
+            image: "https://www.billboard.com/wp-content/uploads/stylus/501740-r-and-b-list-617-409.jpg?w=617"
+        },
+        {
+            year: 2000,
+            event: "Pop-rock and club-influenced production bring energy to new highs",
+            contents: [
+                "The late 90s-early 2000s saw high-energy releases from Britney Spears, NSYNC, and Destiny's Child.",
+                "Pop punk and alternative rock (Blink-182, Linkin Park, Green Day) pushed intensity upward.",
+                "Club-oriented electronic production began influencing mainstream pop, boosting loudness and energy."
+            ],
+            image: "https://creativereview.imgix.net/uploads/2021/05/SoSolid165.jpg?auto=compress,format&crop=faces,entropy,edges&fit=crop&q=60&w=1940&h=1230"
+        },
+        {
+            year: 2007,
+            event: "EDM influence and the Loudness War peak mainstream energy",
+            contents: [
+                "Electronic producers (Timbaland, Calvin Harris, David Guetta) brought explosive, high-loudness mixes.",
+                "The industry intentionally mastered songs louder for competitive advantage—raising perceived energy.",
+                "Billboard tracks from 2007-2012 represent the highest sustained energy levels in modern history."
+            ],
+            image: "https://theriseofedm.wordpress.com/wp-content/uploads/2013/10/dj-with-turntable.jpg"
+        },
+        {
+            year: 2013,
+            event: "Shift toward minimalist, mellow pop reduces overall energy",
+            contents: [
+                "Artists like Drake, The Weeknd, and Lorde popularized darker, slower, atmosphere-heavy production.",
+                "Streaming rewarded relaxed, low-energy listening habits.",
+                "This begins a long-term decline in Billboard track intensity from 2013 onward."
+            ],
+            image: "https://media.soundoflife.com/34/resources/wHHQMYPLAx1WT4mC3pEH9zbq3jJAySK0BJR2lBls.jpg"
+        },
+        {
+            year: 2017,
+            event: "Hip-hop dominance and trap production push energy downward",
+            contents: [
+                "Trap's signature sparse drums and deep 808s replaced the high-energy EDM and pop of the early 2010s.",
+                "Hip-hop took over the Hot 100, becoming the most consumed genre in the U.S.",
+                "The chart's sound shifted toward mood-driven, mid-tempo production."
+            ],
+            image: "https://opinionatedopinionsite.wordpress.com/wp-content/uploads/2022/01/image_editor_output_image1861738765-1641747875093-e1641747993432.jpg?w=600"
+        }
+    ],
     loudness: [],
     speechieness: [],
     tempo: [],
