@@ -3,6 +3,33 @@
  * Manages track data, Billboard charts, and PCA loadings
  */
 export class DataManager {
+    // Supergenre order and color scale (matching globalization viz)
+    static SUPERGENRE_ORDER = [
+        "Pop",
+        "Hip-Hop/Rap",
+        "Rock/Metal",
+        "Electronic/Dance",
+        "R&B/Soul/Funk",
+        "Country/Folk/Americana",
+        "Latin",
+        "Reggae/Caribbean",
+        "Jazz/Blues",
+        "Other/Unknown",
+    ];
+    
+    static SUPERGENRE_COLORS = {
+        "Pop": "#4e79a7",
+        "Hip-Hop/Rap": "#f28e2c",
+        "Rock/Metal": "#e15759",
+        "Electronic/Dance": "#76b7b2",
+        "R&B/Soul/Funk": "#59a14f",
+        "Country/Folk/Americana": "#edc949",
+        "Latin": "#af7aa1",
+        "Reggae/Caribbean": "#ff9da7",
+        "Jazz/Blues": "#9c755f",
+        "Other/Unknown": "#bab0ab",
+    };
+
     constructor(dataUrl) {
         this.dataUrl = dataUrl;
         
@@ -56,29 +83,140 @@ export class DataManager {
     }
 
     /**
-     * Extract all unique genres from the dataset with counts
+     * Extract all unique supergenres from the dataset with counts
      * @private
      */
     extractGenres() {
-        const genreCounts = {};
+        const supergenreCounts = {};
         this.parsedData.forEach(track => {
             if (track.genres) {
                 const genres = Array.isArray(track.genres) ? track.genres : [track.genres];
+                // Map all raw genres to supergenres and count unique supergenres per track
+                const trackSupergenres = new Set();
                 genres.forEach(genre => {
                     if (genre && genre.trim()) {
-                        const g = genre.trim();
-                        genreCounts[g] = (genreCounts[g] || 0) + 1;
+                        const supergenre = this.toSuperGenre(genre.trim());
+                        trackSupergenres.add(supergenre);
                     }
+                });
+                // Increment count for each unique supergenre
+                trackSupergenres.forEach(supergenre => {
+                    supergenreCounts[supergenre] = (supergenreCounts[supergenre] || 0) + 1;
                 });
             }
         });
         
-        // Store genres with counts, sorted by count descending
-        this.allGenres = Object.entries(genreCounts)
-            .map(([genre, count]) => ({ genre, count }))
-            .sort((a, b) => b.count - a.count);
+        // Store supergenres with counts, sorted by predefined order
+        this.allGenres = DataManager.SUPERGENRE_ORDER.map(supergenre => ({
+            genre: supergenre,
+            count: supergenreCounts[supergenre] || 0
+        })).filter(g => g.count > 0);
         
-        console.log(`Found ${this.allGenres.length} unique genres`);
+        console.log(`Found ${this.allGenres.length} unique supergenres`);
+        console.log('Supergenre distribution:', this.allGenres);
+    }
+
+    /**
+     * Map a raw genre to a supergenre category
+     * @param {string} genre - Raw genre string
+     * @returns {string} Supergenre category
+     */
+    toSuperGenre(genre) {
+        const s = (genre || "Unknown").toLowerCase();
+        if (
+            s.includes("hip hop") ||
+            s.includes("rap") ||
+            s.includes("drill") ||
+            s.includes("trap") ||
+            s.includes("grime")
+        ) {
+            return "Hip-Hop/Rap";
+        }
+        if (
+            s.includes("rock") ||
+            s.includes("metal") ||
+            s.includes("punk") ||
+            s.includes("grunge") ||
+            s.includes("emo")
+        ) {
+            return "Rock/Metal";
+        }
+        if (
+            s.includes("edm") ||
+            s.includes("electro") ||
+            s.includes("house") ||
+            s.includes("trance") ||
+            s.includes("techno") ||
+            s.includes("dance") ||
+            s.includes("dubstep") ||
+            s.includes("euro")
+        ) {
+            return "Electronic/Dance";
+        }
+        if (
+            s.includes("r&b") ||
+            s.includes("soul") ||
+            s.includes("motown") ||
+            s.includes("funk") ||
+            s.includes("quiet storm")
+        ) {
+            return "R&B/Soul/Funk";
+        }
+        if (
+            s.includes("country") ||
+            s.includes("americana") ||
+            s.includes("bluegrass") ||
+            s.includes("folk")
+        ) {
+            return "Country/Folk/Americana";
+        }
+        if (
+            s.includes("latin") ||
+            s.includes("reggaeton") ||
+            s.includes("bachata") ||
+            s.includes("merengue") ||
+            s.includes("cumbia") ||
+            s.includes("vallenato") ||
+            s.includes("español")
+        ) {
+            return "Latin";
+        }
+        if (
+            s.includes("reggae") ||
+            s.includes("dancehall") ||
+            s.includes("soca") ||
+            s.includes("calypso") ||
+            s.includes("ragga")
+        ) {
+            return "Reggae/Caribbean";
+        }
+        if (s.includes("jazz") || s.includes("swing") || s.includes("bossa")) {
+            return "Jazz/Blues";
+        }
+        if (s.includes("pop")) {
+            return "Pop";
+        }
+        return "Other/Unknown";
+    }
+
+    /**
+     * Get the supergenre for a track
+     * @param {Object} track - Track object with genres property
+     * @returns {string} Supergenre category
+     */
+    getSuperGenre(track) {
+        if (!track.genres) return "Other/Unknown";
+        
+        const genres = Array.isArray(track.genres) ? track.genres : [track.genres];
+        
+        // Return the first valid supergenre found
+        for (const genre of genres) {
+            if (genre && genre.trim()) {
+                return this.toSuperGenre(genre.trim());
+            }
+        }
+        
+        return "Other/Unknown";
     }
 
     /**
@@ -291,5 +429,21 @@ export class DataManager {
      */
     getPCALoadings() {
         return this.loadingVectors;
+    }
+
+    /**
+     * Get supergenre order
+     * @returns {Array<string>} Ordered array of supergenre names
+     */
+    getSuperGenreOrder() {
+        return DataManager.SUPERGENRE_ORDER;
+    }
+
+    /**
+     * Get supergenre colors
+     * @returns {Object} Map of supergenre names to color hex codes
+     */
+    getSuperGenreColors() {
+        return DataManager.SUPERGENRE_COLORS;
     }
 }

@@ -133,7 +133,7 @@ export class UIManager {
             if (matches.length > 0) {
                 genreSuggestions.innerHTML = matches.map(g => 
                     `<div class="genre-option" data-genre="${g.genre}">
-                        <span>${this.capitalizeGenre(g.genre)}</span>
+                        <span>${g.genre}</span>
                         <span class="genre-count">${g.count}</span>
                     </div>`
                 ).join('');
@@ -154,7 +154,7 @@ export class UIManager {
                             this.onGenreFilterCallback(genre);
                         }
                         
-                        genreInput.value = this.capitalizeGenre(genre);
+                        genreInput.value = genre;
                         genreSuggestions.style.display = 'none';
                         
                         if (clearButton) {

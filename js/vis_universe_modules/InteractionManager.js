@@ -218,15 +218,14 @@ export class InteractionManager {
     }
     
     /**
-     * Check if track matches selected genre
+     * Check if track matches selected supergenre
      */
     trackMatchesGenre(track) {
         if (!this.selectedGenre) return true;
         
-        if (!track.genres) return false;
-        
-        const genres = Array.isArray(track.genres) ? track.genres : [track.genres];
-        return genres.some(genre => genre && genre.trim() === this.selectedGenre);
+        // Get the track's supergenre using DataManager
+        const trackSupergenre = this.dataManager.getSuperGenre(track);
+        return trackSupergenre === this.selectedGenre;
     }
     
     /**
