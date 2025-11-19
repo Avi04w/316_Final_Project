@@ -1,10 +1,10 @@
-:root {
-    --era-nav-height: 520px;
-    --era-nav-scale: 1.45;
-    --era-nav-base-width: 200px;
-    --era-nav-visual-height: calc(var(--era-nav-height) * var(--era-nav-scale));
-    --era-nav-visual-width: calc(var(--era-nav-base-width) * var(--era-nav-scale));
-}
+/*:root {*/
+/*    --era-nav-height: 520px;*/
+/*    --era-nav-scale: 1.45;*/
+/*    --era-nav-base-width: 200px;*/
+/*    --era-nav-visual-height: calc(var(--era-nav-height) * var(--era-nav-scale));*/
+/*    --era-nav-visual-width: calc(var(--era-nav-base-width) * var(--era-nav-scale));*/
+/*}*/
 
 .era-section {
     width: 100%;

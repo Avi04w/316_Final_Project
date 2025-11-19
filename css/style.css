@@ -318,11 +318,10 @@ html, body { height: 100%; margin: 0; }
 
   /* feature description card */
   #feature-description {
-    margin-top: 1rem;
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 10px 20px 0 20px;
+    padding: 0 20px 0 20px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
@@ -351,8 +350,8 @@ html, body { height: 100%; margin: 0; }
 /* Persistent top-left feature selector (presentational only) */
 #persistent-feature-control {
     position: fixed;
-    top: 10px;
-    left: 10px;
+    top: 20px;
+    left: 20px;
     z-index: 10001; /* above most UI elements */
     display: flex;
     align-items: center;
@@ -360,7 +359,7 @@ html, body { height: 100%; margin: 0; }
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(6px);
     border-radius: 10px;
-    padding: 8px 12px;
+    padding: 12px 16px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
     pointer-events: auto; /* interactive */
 }
@@ -370,7 +369,13 @@ html, body { height: 100%; margin: 0; }
     border-radius: 8px;
     border: 1px solid #d1d5db;
     padding: 6px 8px;
-    font-size: 13px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+#persistent-feature-select:hover {
+    border-color: #434343;
+    box-shadow: 0 0 0 1px rgba(131, 131, 131, 0.25);
 }
 
 /* Hide the persistent top-left feature control when requested by JS */
@@ -382,5 +387,9 @@ html, body { height: 100%; margin: 0; }
 }
 
 .dna-description {
-    margin: 20px 10%;
+    margin: 0 10%;
+}
+
+.dna-description2 {
+    margin: 0 10% 10px 10%;
 }

@@ -16,11 +16,11 @@ class VisDNA {
         this.colorScales = {
             energy:       d3.scaleSequential(d3.interpolateRgb("#bcffc4", "#1d4e00")),
             tempo:        d3.scaleSequential(d3.interpolateRgb("#ffc8c8", "#770000")),
-            acousticness: d3.scaleSequential(d3.interpolateRgb("#d5e9ff", "#012b42")),
+            acousticness: d3.scaleSequential(d3.interpolateRgb("#e4f1ff", "#00324e")),
             valence:      d3.scaleSequential(d3.interpolateRgb("#005283", "#ded700")),
-            danceability: d3.scaleSequential(d3.interpolateRgb("#ffc7de", "#230465")),
+            danceability: d3.scaleSequential(d3.interpolateRgb("#e8dcff", "#1e0059")),
             speechiness:  d3.scaleSequential(d3.interpolateRgb("#ffe9b6", "#6a4c00")),
-            loudness:     d3.scaleSequential(d3.interpolateRgb("#bafff5", "#007c66"))
+            loudness:     d3.scaleSequential(d3.interpolateRgb("#9E9E9E", "#000000"))
         };
 
 
@@ -28,13 +28,13 @@ class VisDNA {
         this.numX = 0;
 
         this.featureDescriptions = {
-            danceability: "Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.",
-            energy: "Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale.",
-            loudness: "The overall loudness of a track in decibels (dB).",
-            speechiness: "Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording, the closer to 1.0 the attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words.",
-            acousticness: "A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic.",
-            valence: "A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry).",
-            tempo: "The overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration."
+            danceability: "Danceability is a measure from 0 to 1 describing how suitable a track is for dancing based on tempo, rhythm stability, and beat clarity.",
+            energy: "Energy is a measure from 0 to 1 describing the overall intensity of a track, with higher values corresponding to louder, faster, and more active music.",
+            loudness: "Loudness is the average volume of a track measured in decibels (dB).",
+            speechiness: "Speechiness is a measure from 0 to 1 describing how much spoken content is present in a track, with higher values indicating more speech-like audio.",
+            acousticness: "Acousticness is a measure from 0 to 1 describing how strongly a track relies on natural, non-electronic sound sources, with higher values indicating minimal electronic production or synthesized elements.",
+            valence: "Valence is a measure from 0 to 1 describing how positive or negative a track sounds emotionally, with higher values sounding more upbeat.",
+            tempo: "Tempo is the speed of a track measured in beats per minute (BPM)."
         };
 
 
@@ -53,6 +53,32 @@ class VisDNA {
         this.x = d3.scaleLinear().range([this.margin.left, this.width - this.margin.right]);
         this.y = d3.scaleLinear().range([this.height - this.margin.bottom - 40, this.margin.top]);
         this.z = d3.scaleLinear().range([12, 3]);
+
+        const container = d3.select(selector).html("");
+        container.style("position", "relative");
+
+        container.append("p")
+            .attr("class", "dna-description")
+            .style("max-width", `${this.width}px`)
+            .style("word-wrap", "break-word")
+            .text(`Together, these features form the “genetic code” of a song, much like DNA encodes biological traits.
+            This visualization represents how the average musical features of Billboard-charting songs have evolved each year since 1980.`);
+
+        container.append("p")
+            .attr("class", "dna-description")
+            .style("max-width", `${this.width}px`)
+            .style("word-wrap", "break-word")
+            .text(`Each vertical bar corresponds to one year, with color intensity encoding the value of the selected feature (for example, higher energy or greater acousticness).`);
+
+        container.append("p")
+            .attr("class", "dna-description2")
+            .style("max-width", `${this.width}px`)
+            .style("word-wrap", "break-word")
+            .style('font-weight', '700')
+            .text(`Hovering over a bar shows the specific feature value for that year. Click on a bar to see top 10 longest-charting #1 songs of that year, and their ${this.feature}.`);
+
+
+
 
         this.svg = d3.select(this.selector)
             .append("svg")
@@ -256,6 +282,7 @@ class VisDNA {
             .attr("text-anchor", "middle")
             .attr("font-size", "13px")
             .attr("fill", "#444")
+            .style("word-wrap", "break-word")
             .text(this.featureDescriptions[this.feature]);
         this.wrapText(this.legendGroup.select(".feature-description"), this.width * 0.8);
 
@@ -286,12 +313,21 @@ class VisDNA {
     }
 
     updateDescription() {
-        // update the description attached to the legendGroup instead of an SVG-level text node
+        // update the description attached to the legendGroup
         this.legendGroup.select(".feature-description")
-            .text(this.featureDescriptions[this.feature])
-            .attr("fill", "#444");
+            .attr("fill", "#444")
+            .style("word-wrap", "break-word")
+            .text(this.featureDescriptions[this.feature]);
 
         this.wrapText(this.legendGroup.select(".feature-description"), this.width * 0.8);
+
+        // update the top-level paragraph (dna-description2) so it changes with the selected feature
+        const prettyFeature = this.feature.charAt(0).toUpperCase() + this.feature.slice(1);
+        const descText = `Hovering over a bar shows the specific feature value for that year. Click on a bar to see top 10 longest-charting #1 songs of that year, and their ${prettyFeature}.`;
+
+        // ensure we target the paragraph appended to the container for this visualization
+        d3.select(this.selector).selectAll(".dna-description2")
+            .text(descText);
     }
 
     generateData(centerX) {

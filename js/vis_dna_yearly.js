@@ -21,9 +21,9 @@ const FEATURE_BOUNDS = {
             this.colorScales = {
                 energy:       d3.scaleSequential(d3.interpolateRgb("#bcffc4", "#1d4e00")),
                 tempo:        d3.scaleSequential(d3.interpolateRgb("#ffc8c8", "#770000")),
-                acousticness: d3.scaleSequential(d3.interpolateRgb("#d5e9ff", "#012b42")),
+                acousticness: d3.scaleSequential(d3.interpolateRgb("#e4f1ff", "#00324e")),
                 valence:      d3.scaleSequential(d3.interpolateRgb("#005283", "#ded700")),
-                danceability: d3.scaleSequential(d3.interpolateRgb("#ffc7de", "#230465")),
+                danceability: d3.scaleSequential(d3.interpolateRgb("#e8dcff", "#1e0059")),
                 speechiness:  d3.scaleSequential(d3.interpolateRgb("#ffe9b6", "#6a4c00")),
                 loudness:     d3.scaleSequential(d3.interpolateRgb("#bafff5", "#007c66"))
             };
@@ -42,6 +42,14 @@ const FEATURE_BOUNDS = {
             const container = d3.select(selector).html("");
             // ensure container is positioned (useful if other absolute elements are added later)
             container.style("position", "relative");
+
+            container.append("p")
+                .attr("class", "dna-description")
+                .text("These are the top 10 longest-charting #1 songs for the chosen Year.");
+
+            container.append("p")
+                .attr("class", "dna-description2")
+                .text("Each Helix represents a song, with the color indicating the intensity of the chosen feature.");
 
             // create SVG
             this.svg = container.append("svg")
