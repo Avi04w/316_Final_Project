@@ -97,7 +97,8 @@ class MusicUniverseVisualization {
             this.sceneManager.initialize();
             this.sceneManager.createPointCloud(this.parsedData);
             this.sceneManager.createLoadingArrows(this.loadingVectors);
-            this.sceneManager.createLoadingVectorLegend();
+            // Will be updated with actual feature after receiving message from parent
+            this.sceneManager.createLoadingVectorLegend(null);
             
             // Sync scene objects for backwards compatibility
             this.scene = this.sceneManager.getScene();
@@ -193,6 +194,8 @@ class MusicUniverseVisualization {
                 if (event.data && event.data.type === 'set-feature') {
                     const feature = event.data.feature;
                     this.updateColors(feature, true);
+                    // Update loading vector visibility to show only current feature
+                    this.updateLoadingVectorForFeature(feature);
                     // Note: No local dropdown to update since feature is controlled by parent page
                 }
             });
@@ -204,6 +207,46 @@ class MusicUniverseVisualization {
         } catch (error) {
             console.error('Error initializing visualization:', error);
         }
+    }
+
+    /**
+     * Update loading vector visibility to show only the current feature
+     */
+    updateLoadingVectorForFeature(feature) {
+        if (!this.sceneManager || !this.sceneManager.vectorVisibility) return;
+        
+        // Check if loading vectors are currently visible
+        const loadingCheckbox = document.getElementById('show-loadings');
+        const areLoadingsVisible = loadingCheckbox && loadingCheckbox.checked;
+        
+        // Update visibility state for all features
+        Object.keys(this.sceneManager.vectorVisibility).forEach(f => {
+            const shouldShow = f === feature;
+            this.sceneManager.vectorVisibility[f] = shouldShow;
+            
+            // Update arrow visibility only if loadings are currently shown
+            if (areLoadingsVisible) {
+                this.sceneManager.loadingArrows.forEach(arrow => {
+                    if (arrow.userData.feature === f) {
+                        arrow.visible = shouldShow;
+                    }
+                });
+            }
+            
+            // Update legend item appearance
+            if (this.sceneManager.loadingVectorLegend) {
+                const legendItem = this.sceneManager.loadingVectorLegend.querySelector(`[data-feature="${f}"]`);
+                if (legendItem) {
+                    if (shouldShow) {
+                        legendItem.style.opacity = '1';
+                        legendItem.style.textDecoration = 'none';
+                    } else {
+                        legendItem.style.opacity = '0.4';
+                        legendItem.style.textDecoration = 'line-through';
+                    }
+                }
+            }
+        });
     }
 
     /**

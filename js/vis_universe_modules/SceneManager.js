@@ -26,15 +26,15 @@ export class SceneManager {
         this.width = 0;
         this.height = 0;
         
-        // Feature colors for loading vectors
+        // Feature colors for loading vectors (matching DNA gradient colors - end colors for visibility)
         this.featureColors = {
-            'danceability': 0xFF0000,      // Red
-            'energy': 0xFF7F00,            // Orange
-            'loudness': 0xFFFF00,          // Yellow
-            'speechiness': 0x00FF00,       // Green
-            'acousticness': 0x0000FF,      // Blue
-            'valence': 0x7F00FF,           // Purple
-            'tempo': 0x00FFFF              // Cyan
+            'energy': 0x1d4e00,          // Dark green (end of energy gradient)
+            'tempo': 0x770000,           // Dark red (end of tempo gradient)
+            'acousticness': 0x012b42,    // Dark blue (end of acousticness gradient)
+            'valence': 0xded700,         // Yellow (end of valence gradient)
+            'danceability': 0x230465,    // Dark purple (end of danceability gradient)
+            'speechiness': 0x6a4c00,     // Dark brown (end of speechiness gradient)
+            'loudness': 0x007c66         // Dark teal (end of loudness gradient)
         };
         
         // Animation
@@ -175,23 +175,44 @@ export class SceneManager {
         
         Object.entries(loadingVectors).forEach(([feature, loading]) => {
             const direction = new THREE.Vector3(loading.pc0, loading.pc1, loading.pc2);
+            const normalizedDirection = direction.clone().normalize();
             const normalizedLength = referenceLength;
             const color = this.featureColors[feature] || 0xFFFFFF;
             
-            const arrow = new THREE.ArrowHelper(
-                direction.normalize(),
-                new THREE.Vector3(0, 0, 0),
-                normalizedLength,
-                color,
-                normalizedLength * 0.1,
-                normalizedLength * 0.08
-            );
+            // Create a group to hold the custom arrow
+            const arrowGroup = new THREE.Group();
             
-            arrow.visible = false;
-            arrow.userData.feature = feature;
+            // Create cylindrical shaft
+            const shaftRadius = 0.05; // Thicker shaft
+            const shaftLength = normalizedLength * 0.85; // 85% of total length for shaft
+            const shaftGeometry = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftLength, 16);
+            const shaftMaterial = new THREE.MeshBasicMaterial({ color: color });
+            const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
             
-            this.scene.add(arrow);
-            this.loadingArrows.push(arrow);
+            // Rotate and position shaft (cylinder is vertical by default, need to align with direction)
+            shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normalizedDirection);
+            shaft.position.copy(normalizedDirection.clone().multiplyScalar(shaftLength / 2));
+            
+            // Create cone for arrowhead
+            const headLength = normalizedLength * 0.15;
+            const headWidth = normalizedLength * 0.05;
+            const coneGeometry = new THREE.ConeGeometry(headWidth, headLength, 16);
+            const coneMaterial = new THREE.MeshBasicMaterial({ color: color });
+            const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+            
+            // Position cone at the end of the shaft
+            cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normalizedDirection);
+            cone.position.copy(normalizedDirection.clone().multiplyScalar(shaftLength + headLength / 2));
+            
+            // Add shaft and cone to group
+            arrowGroup.add(shaft);
+            arrowGroup.add(cone);
+            
+            arrowGroup.visible = false;
+            arrowGroup.userData.feature = feature;
+            
+            this.scene.add(arrowGroup);
+            this.loadingArrows.push(arrowGroup);
         });
         
         console.log(`Created ${this.loadingArrows.length} loading vector arrows`);
@@ -199,8 +220,9 @@ export class SceneManager {
     
     /**
      * Create legend for loading vectors
+     * @param {string} currentFeature - The currently active feature to show by default
      */
-    createLoadingVectorLegend() {
+    createLoadingVectorLegend(currentFeature = null) {
         const container = document.getElementById(this.containerId);
         
         const legend = document.createElement('div');
@@ -231,8 +253,15 @@ export class SceneManager {
             item.appendChild(colorBox);
             item.appendChild(label);
             
-            // Initialize as visible (since loadings start visible when checkbox is checked)
-            this.vectorVisibility[feature] = true;
+            // Initialize visibility: only current feature visible, others hidden
+            const isCurrentFeature = feature === currentFeature;
+            this.vectorVisibility[feature] = isCurrentFeature;
+            
+            // Style legend item based on initial visibility
+            if (!isCurrentFeature) {
+                item.style.opacity = '0.4';
+                item.style.textDecoration = 'line-through';
+            }
             
             // Add click handler to toggle individual vector
             item.addEventListener('click', () => {
