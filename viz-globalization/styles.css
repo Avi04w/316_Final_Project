@@ -22,6 +22,7 @@ body {
   padding: 1.25rem 1.75rem;
   background: #12131a;
   color: #f3f4f9;
+  text-align: center;
 }
 
 .app-header h1 {
@@ -31,7 +32,7 @@ body {
 }
 
 .app-header p {
-  margin: 0.35rem 0 0;
+  margin: 0.35rem auto;
   max-width: 720px;
   color: #d5d7e3;
   font-size: 0.95rem;
@@ -91,7 +92,7 @@ main {
   align-items: flex-start;
   gap: 0.4rem;
 }
-
+/* 
 .map-header {
   justify-content: center;
 }
@@ -99,7 +100,7 @@ main {
 .map-title {
   flex: 1 1 100%;
   text-align: center;
-}
+} */
 
 .map-controls {
   display: flex;
