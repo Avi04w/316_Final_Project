@@ -59,10 +59,24 @@ export class ColorManager {
         const geometry = this.sceneManager.getGeometry();
         if (!geometry) return;
         
+        // Cancel any ongoing animation first
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        
         const colorAttribute = geometry.getAttribute('color');
         const alphaAttribute = geometry.getAttribute('alpha');
-        const oldColors = new Float32Array(colorAttribute.array);
-        const oldAlphas = new Float32Array(alphaAttribute.array);
+        
+        // Copy and clamp current colors to ensure they're in valid range
+        const oldColors = new Float32Array(trackData.length * 3);
+        const oldAlphas = new Float32Array(trackData.length);
+        for (let i = 0; i < trackData.length; i++) {
+            oldColors[i * 3] = Math.max(0, Math.min(1, colorAttribute.array[i * 3]));
+            oldColors[i * 3 + 1] = Math.max(0, Math.min(1, colorAttribute.array[i * 3 + 1]));
+            oldColors[i * 3 + 2] = Math.max(0, Math.min(1, colorAttribute.array[i * 3 + 2]));
+            oldAlphas[i] = Math.max(0, Math.min(1, alphaAttribute.array[i]));
+        }
         
         const newColors = new Float32Array(trackData.length * 3);
         const newAlphas = new Float32Array(trackData.length);
@@ -164,13 +178,17 @@ export class ColorManager {
                 ? 4 * progress * progress * progress 
                 : 1 - Math.pow(-2 * progress + 2, 3) / 2;
             
-            // Interpolate colors
+            // Interpolate colors with clamping to ensure valid range
             for (let i = 0; i < trackData.length; i++) {
-                colorAttribute.array[i * 3] = fromColors[i * 3] + (toColors[i * 3] - fromColors[i * 3]) * easedProgress;
-                colorAttribute.array[i * 3 + 1] = fromColors[i * 3 + 1] + (toColors[i * 3 + 1] - fromColors[i * 3 + 1]) * easedProgress;
-                colorAttribute.array[i * 3 + 2] = fromColors[i * 3 + 2] + (toColors[i * 3 + 2] - fromColors[i * 3 + 2]) * easedProgress;
+                const r = fromColors[i * 3] + (toColors[i * 3] - fromColors[i * 3]) * easedProgress;
+                const g = fromColors[i * 3 + 1] + (toColors[i * 3 + 1] - fromColors[i * 3 + 1]) * easedProgress;
+                const b = fromColors[i * 3 + 2] + (toColors[i * 3 + 2] - fromColors[i * 3 + 2]) * easedProgress;
+                const a = fromAlphas[i] + (toAlphas[i] - fromAlphas[i]) * easedProgress;
                 
-                alphaAttribute.array[i] = fromAlphas[i] + (toAlphas[i] - fromAlphas[i]) * easedProgress;
+                colorAttribute.array[i * 3] = Math.max(0, Math.min(1, r));
+                colorAttribute.array[i * 3 + 1] = Math.max(0, Math.min(1, g));
+                colorAttribute.array[i * 3 + 2] = Math.max(0, Math.min(1, b));
+                alphaAttribute.array[i] = Math.max(0, Math.min(1, a));
             }
             
             colorAttribute.needsUpdate = true;
