@@ -41,7 +41,6 @@ export class UIManager {
      * Initialize all event listeners
      */
     setupEventListeners(options = {}) {
-        this.setupColorDropdown();
         this.setupGenreFilter();
         this.setupBillboardControls();
         this.setupResetButton();
@@ -55,54 +54,12 @@ export class UIManager {
     
     /**
      * Setup color feature dropdown
+     * NOTE: This is now handled by the persistent feature selector on the parent page.
+     * The universe visualization receives feature changes via postMessage.
      */
     setupColorDropdown() {
-        const dropdown = document.getElementById('color-feature');
-        const clearButton = document.getElementById('clear-color');
-        if (!dropdown) return;
-        
-        dropdown.addEventListener('change', () => {
-            // Remove placeholder styling when a real option is selected
-            if (dropdown.value !== '') {
-                dropdown.classList.remove('placeholder-active');
-            }
-            
-            // Clear billboard if callback provided
-            if (this.onClearBillboardCallback) {
-                this.onClearBillboardCallback();
-            }
-            
-            // Re-enable dropdown if it was disabled
-            dropdown.disabled = false;
-            dropdown.style.opacity = '1';
-            dropdown.style.cursor = 'pointer';
-            
-            // Default to 'none' if placeholder is somehow selected
-            const selectedValue = dropdown.value || 'none';
-            
-            if (this.onColorChangeCallback) {
-                this.onColorChangeCallback(selectedValue);
-            }
-            
-            // Show clear button
-            if (clearButton && selectedValue !== 'none') {
-                clearButton.classList.remove('hidden');
-            }
-        });
-        
-        // Clear color button
-        if (clearButton) {
-            clearButton.addEventListener('click', () => {
-                // Reset dropdown to placeholder
-                dropdown.value = '';
-                dropdown.classList.add('placeholder-active');
-                clearButton.classList.add('hidden');
-                
-                if (this.onClearColorCallback) {
-                    this.onClearColorCallback();
-                }
-            });
-        }
+        // Color dropdown removed - feature selection now controlled by parent page
+        // Feature changes are received via window.addEventListener('message') in vis_universe.js
     }
     
     /**

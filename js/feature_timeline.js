@@ -191,7 +191,7 @@ class FeatureTimeline {
             .attr("font-size", 16)
             .attr("fill", "#333")
             .style("opacity", 0)
-            .text(this.feature)
+            .text(this.feature.charAt(0).toUpperCase() + this.feature.slice(1))
             .transition()
             .duration(1000)
             .style("opacity", 1)

@@ -119,6 +119,17 @@ li {
     margin-bottom: 25px;
 }
 
+.control-hint {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: rgba(33, 150, 243, 0.05);
+    border-left: 3px solid #2196F3;
+    border-radius: 4px;
+}
+
 .input-wrapper {
     position: relative;
 }

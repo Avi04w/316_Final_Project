@@ -193,17 +193,7 @@ class MusicUniverseVisualization {
                 if (event.data && event.data.type === 'set-feature') {
                     const feature = event.data.feature;
                     this.updateColors(feature, true);
-
-                    // Also update the dropdown in the iframe to match
-                    const dropdown = document.getElementById('color-feature');
-                    if (dropdown) {
-                        dropdown.value = feature;
-                        dropdown.classList.remove('placeholder-active');
-                        const clearButton = document.getElementById('clear-color');
-                        if (clearButton) {
-                            clearButton.classList.remove('hidden');
-                        }
-                    }
+                    // Note: No local dropdown to update since feature is controlled by parent page
                 }
             });
 
