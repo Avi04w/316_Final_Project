@@ -25,7 +25,7 @@ const FEATURE_BOUNDS = {
                 valence:      d3.scaleSequential(d3.interpolateRgb("#005283", "#ded700")),
                 danceability: d3.scaleSequential(d3.interpolateRgb("#e8dcff", "#1e0059")),
                 speechiness:  d3.scaleSequential(d3.interpolateRgb("#ffe9b6", "#6a4c00")),
-                loudness:     d3.scaleSequential(d3.interpolateRgb("#bafff5", "#007c66"))
+                loudness:     d3.scaleSequential(d3.interpolateRgb("#9E9E9E", "#000000"))
             };
 
             // short human-readable descriptions (used by the legend description)
