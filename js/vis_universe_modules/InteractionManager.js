@@ -157,22 +157,27 @@ export class InteractionManager {
             }
         }
         
-        // Features to display with their values
+        // Features to display with their values (matching global feature set)
         const features = [
-            { name: 'Energy', value: data.energy || 0, max: 1 },
-            { name: 'Danceability', value: data.danceability || 0, max: 1 },
-            { name: 'Valence', value: data.valence || 0, max: 1 },
             { name: 'Acousticness', value: data.acousticness || 0, max: 1 },
-            { name: 'Instrumentalness', value: data.instrumentalness || 0, max: 1 },
-            { name: 'Speechiness', value: data.speechiness || 0, max: 1 },
-            { name: 'Liveness', value: data.liveness || 0, max: 1 },
+            { name: 'Danceability', value: data.danceability || 0, max: 1 },
+            { name: 'Energy', value: data.energy || 0, max: 1 },
             { name: 'Loudness', value: data.loudness || 0, max: 0, isSpecial: true },
+            { name: 'Speechiness', value: data.speechiness || 0, max: 1 },
+            { name: 'Tempo', value: data.tempo || 0, max: 0, isSpecial: true },
+            { name: 'Valence', value: data.valence || 0, max: 1 },
         ];
         
         // Normalize loudness (typically -60 to 0 dB)
         const loudnessNormalized = Math.max(0, Math.min(1, (data.loudness + 60) / 60));
         features.find(f => f.name === 'Loudness').value = loudnessNormalized;
         features.find(f => f.name === 'Loudness').displayValue = (data.loudness || 0).toFixed(1) + ' dB';
+        
+        // Normalize tempo (typically 0-250 BPM, show actual value)
+        const tempo = data.tempo || 0;
+        const tempoNormalized = Math.max(0, Math.min(1, tempo / 250));
+        features.find(f => f.name === 'Tempo').value = tempoNormalized;
+        features.find(f => f.name === 'Tempo').displayValue = tempo.toFixed(0) + ' BPM';
         
         let barsHtml = '';
         features.forEach(feature => {
