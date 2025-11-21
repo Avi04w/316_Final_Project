@@ -191,21 +191,16 @@ export class BillboardController {
                 dateRangeEl.textContent = this.formatDateRange(startDate, endDate);
             }
             
-            // Update visualization
+            // Update visualization with current feature (don't reset to 'none')
             this.colorManager.setFilterState(null, this.billboardMode, this.selectedYear, this.currentWeek);
-            this.colorManager.updateColors('none', false);
+            // Keep current feature - don't reset colors
+            const currentFeature = this.colorManager.currentColorFeature || 'none';
+            this.colorManager.updateColors(currentFeature, false);
             
             // Enable clear button
             const clearButton = document.getElementById('clear-billboard');
             if (clearButton) {
                 clearButton.disabled = false;
-            }
-            
-            // Reset color dropdown
-            const dropdown = document.getElementById('color-feature');
-            if (dropdown) {
-                dropdown.value = '';
-                dropdown.classList.add('placeholder-active');
             }
             
             // Clear genre filter
@@ -330,21 +325,16 @@ export class BillboardController {
                 slider.style.left = `${percentage * 100}%`;
             }
             
-            // Update visualization
+            // Update visualization with current feature (don't reset to 'none')
             this.colorManager.setFilterState(null, this.billboardMode, this.selectedYear, this.currentWeek);
-            this.colorManager.updateColors('none', false);
+            // Keep current feature - don't reset colors
+            const currentFeature = this.colorManager.currentColorFeature || 'none';
+            this.colorManager.updateColors(currentFeature, false);
             
             // Enable clear button
             const clearButton = document.getElementById('clear-billboard');
             if (clearButton) {
                 clearButton.disabled = false;
-            }
-            
-            // Reset color dropdown
-            const dropdown = document.getElementById('color-feature');
-            if (dropdown) {
-                dropdown.value = '';
-                dropdown.classList.add('placeholder-active');
             }
             
             // Clear genre filter

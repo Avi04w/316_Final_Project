@@ -52,7 +52,7 @@ export class ColorManager {
     }
     
     /**
-     * Update point colors based on feature or Billboard mode
+     * Update point colors based on feature (Billboard mode only affects filtering, not colors)
      */
     updateColors(feature, animate = true) {
         const trackData = this.dataManager.getTrackData();
@@ -67,33 +67,22 @@ export class ColorManager {
         const newColors = new Float32Array(trackData.length * 3);
         const newAlphas = new Float32Array(trackData.length);
         
-        // Check if we're in Billboard mode
+        // Determine which tracks match Billboard filter (if active)
+        let billboardTracks = null;
         if (this.billboardMode && this.selectedYear) {
-            const rankings = this.currentWeek 
+            billboardTracks = this.currentWeek 
                 ? this.dataManager.getBillboardRankingsUpToWeek(this.currentWeek)
                 : this.dataManager.getBillboardPeakRankingsForYear(this.selectedYear);
-            
+        }
+        
+        if (feature === 'none') {
+            // No feature selected - use neutral gray
             for (let i = 0; i < trackData.length; i++) {
                 const track = trackData[i];
-                const peakRank = rankings.get(track.id);
+                const matchesGenre = this.trackMatchesGenre(track);
+                const matchesBillboard = !billboardTracks || billboardTracks.has(track.id);
+                const matches = matchesGenre && matchesBillboard;
                 
-                if (peakRank !== undefined) {
-                    const normalizedRank = (100 - peakRank) / 99;
-                    const color = this.getColorFromScale(normalizedRank);
-                    newColors[i * 3] = color[0];
-                    newColors[i * 3 + 1] = color[1];
-                    newColors[i * 3 + 2] = color[2];
-                    newAlphas[i] = 0.9;
-                } else {
-                    newColors[i * 3] = 0.3;
-                    newColors[i * 3 + 1] = 0.3;
-                    newColors[i * 3 + 2] = 0.3;
-                    newAlphas[i] = 0.25;
-                }
-            }
-        } else if (feature === 'none') {
-            for (let i = 0; i < trackData.length; i++) {
-                const matches = this.trackMatchesGenre(trackData[i]);
                 if (matches) {
                     newColors[i * 3] = 0.5;
                     newColors[i * 3 + 1] = 0.5;
@@ -107,11 +96,15 @@ export class ColorManager {
                 }
             }
         } else {
+            // Feature selected - use feature-based colors
             const featureValues = trackData.map(d => d[feature] || 0);
             const normalized = this.normalizeFeature(featureValues);
             
             normalized.forEach((value, i) => {
-                const matches = this.trackMatchesGenre(trackData[i]);
+                const track = trackData[i];
+                const matchesGenre = this.trackMatchesGenre(track);
+                const matchesBillboard = !billboardTracks || billboardTracks.has(track.id);
+                const matches = matchesGenre && matchesBillboard;
                 
                 if (matches) {
                     const color = this.getColorFromScale(value, feature);
@@ -137,17 +130,15 @@ export class ColorManager {
         this.currentColorFeature = feature;
         
         // Update legend display
-        if (this.billboardMode && this.selectedYear) {
-            d3.select('#color-legend').style('display', 'block');
-            this.createBillboardLegend();
-        } else if (feature === 'none') {
+        if (feature === 'none') {
             d3.select('#color-legend').style('display', 'none');
         } else {
             d3.select('#color-legend').style('display', 'block');
             this.createLegend(feature);
         }
         
-        console.log(`Updated colors to ${this.billboardMode ? 'Billboard peak rankings' : feature}`);
+        const modeDesc = this.billboardMode ? 'Billboard filtered' : 'all tracks';
+        console.log(`Updated colors to ${feature} (${modeDesc})`);
     }
     
     /**
@@ -196,24 +187,24 @@ export class ColorManager {
     }
     
     /**
-     * Get color from scale (Viridis for Billboard, feature-specific for audio features)
+     * Get color from scale (feature-specific colors)
      */
-    getColorFromScale(value, feature = null) {
-        // Use Viridis for Billboard mode
-        if (this.billboardMode || !feature || !this.featureColorScales[feature]) {
-            return interpolateViridis(value, VIRIDIS_COLORS);
+    getColorFromScale(value, feature) {
+        // Use feature-specific color scale if available
+        if (feature && this.featureColorScales[feature]) {
+            const scale = this.featureColorScales[feature];
+            const start = scale.start;
+            const end = scale.end;
+            
+            return [
+                start[0] + (end[0] - start[0]) * value,
+                start[1] + (end[1] - start[1]) * value,
+                start[2] + (end[2] - start[2]) * value
+            ];
         }
         
-        // Use feature-specific color scale
-        const scale = this.featureColorScales[feature];
-        const start = scale.start;
-        const end = scale.end;
-        
-        return [
-            start[0] + (end[0] - start[0]) * value,
-            start[1] + (end[1] - start[1]) * value,
-            start[2] + (end[2] - start[2]) * value
-        ];
+        // Fallback to neutral gray if no feature specified
+        return [0.5, 0.5, 0.5];
     }
     
     /**
