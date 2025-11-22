@@ -131,7 +131,7 @@ svg {
     height: 100vh;
     min-height: 0;
     border: none;
-    border-radius: 10px;
+    /*border-radius: 10px;*/
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     overflow: hidden;
 }
@@ -157,7 +157,7 @@ html, body { height: 100%; margin: 0; }
     overflow-y: scroll;         /* keep scrollbar space reserved */
     scroll-snap-type: y mandatory; /* firm snap; use 'proximity' for softer */
     scroll-padding-top: 0;      /* adjust if you add a fixed header later */
-    scrollbar-gutter: stable both-edges;
+    /*scrollbar-gutter: stable both-edges;*/
 }
 
 /* snap targets (direct children of .pageScroller) */
